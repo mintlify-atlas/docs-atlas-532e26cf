@@ -1,10 +1,10 @@
 ---
 title: "Install Minecraft Modpacks in PojavLauncher Android"
 sidebarTitle: "Modpacks"
-description: "Browse and install Minecraft modpacks from Modrinth, CurseForge, and Technic directly inside PojavLauncher on Android."
+description: "Browse and install Minecraft modpacks from Modrinth and CurseForge directly inside PojavLauncher for Android, with full manifest and hash verification."
 ---
 
-A modpack bundles a curated set of mods, configuration files, and optional resource packs into a single installable package. Instead of manually downloading dozens of JARs and tweaking config files, you install one package and play. PojavLauncher integrates a full modpack browser directly into the app, supporting three platforms — Modrinth, CurseForge, and Technic — so you can search, install, and update modpacks without ever leaving the launcher.
+A modpack bundles a curated set of mods, configuration files, and optional resource packs into a single installable package. Instead of manually downloading dozens of JARs and tweaking config files, you install one package and play. PojavLauncher integrates a full modpack browser directly into the app, supporting Modrinth and CurseForge, so you can search, install, and update modpacks without ever leaving the launcher.
 
 ## Supported Platforms
 
@@ -12,17 +12,16 @@ A modpack bundles a curated set of mods, configuration files, and optional resou
 |---|---|---|
 | **Modrinth** | `SOURCE_MODRINTH = 0` | Open-source modding platform; uses `.mrpack` format |
 | **CurseForge** | `SOURCE_CURSEFORGE = 1` | The largest modpack catalogue; uses `.zip` + `manifest.json` |
-| **Technic** | `SOURCE_TECHNIC = 2` | Classic platform for modpacks like Tekkit and Hexxit |
 
 ## Opening the Modpack Browser
 
-From the PojavLauncher main menu, tap the **Modpacks** button. The browser opens with a unified search bar at the top and platform tabs beneath it. Switch between Modrinth, CurseForge, and Technic using the tabs, or leave the default view to search across all platforms simultaneously.
+From the PojavLauncher main menu, tap the **Modpacks** button. The browser opens with a unified search bar and a filter button. Searches run against both Modrinth and CurseForge simultaneously, and results are interleaved in a single list sorted by relevance.
 
 You can filter results by:
-- **Name** — type a search term in the search bar.
-- **Minecraft version** — tap the version filter chip and select the target game version.
+- **Name** — type a search term in the search bar and submit.
+- **Minecraft version** — tap the filter button and select the target game version from the version picker.
 
-Results are sorted by relevance. Scroll down to load additional pages automatically.
+Scroll down to load additional pages automatically.
 
 ## Installing a Modpack from the Browser
 

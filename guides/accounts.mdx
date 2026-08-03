@@ -1,5 +1,5 @@
 ---
-title: "Managing Minecraft Accounts in PojavLauncher"
+title: "Managing Minecraft Accounts in PojavLauncher Android"
 sidebarTitle: "Accounts"
 description: "Add Microsoft (Xbox Live) or offline local accounts to PojavLauncher, understand how tokens are stored, and switch between accounts on Android."
 ---
@@ -74,10 +74,11 @@ The file contains the following fields:
 
 | Field | Description |
 |---|---|
-| `username` | The Minecraft in-game name |
-| `profileId` | The player's UUID (used to fetch the skin face) |
 | `accessToken` | The current Minecraft session token; `"0"` for local accounts |
 | `clientToken` | The client identifier used to refresh/invalidate sessions; `"0"` for local accounts |
+| `profileId` | The player's UUID (used to fetch the skin face) |
+| `username` | The Minecraft in-game name |
+| `selectedVersion` | The last Minecraft version string associated with this account (e.g. `"1.7.10"`) |
 | `isMicrosoft` | `true` for Microsoft accounts, `false` for local |
 | `msaRefreshToken` | The long-lived Microsoft refresh token; `"0"` for local accounts |
 | `xuid` | The Xbox User ID linked to this account |

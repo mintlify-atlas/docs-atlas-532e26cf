@@ -1,7 +1,7 @@
 ---
 title: "Install OptiFine for Better Graphics in PojavLauncher"
 sidebarTitle: "OptiFine"
-description: "Install OptiFine on PojavLauncher for Android to improve Minecraft graphics performance, enable HD textures, and run shaders."
+description: "Install OptiFine on PojavLauncher for Android to improve Minecraft rendering performance, enable HD resource packs, and add shader support."
 ---
 
 OptiFine is a Minecraft graphics-optimization mod that dramatically reduces rendering overhead, adds support for HD resource packs, and unlocks shader pipeline support through the GLSL Shaders API. On mobile hardware — where GPU memory bandwidth and driver maturity vary widely — OptiFine's render-distance controls, dynamic lighting toggles, and smooth lighting options are especially valuable. PojavLauncher ships a built-in OptiFine installer so you never have to manually sideload a JAR or patch a profile by hand; the launcher handles version discovery, download, and profile creation for you.
@@ -113,5 +113,5 @@ OptiFine's shader pipeline is supported in PojavLauncher via the GL4ES OpenGL co
 </Accordion>
 
 <Accordion title="OptiFine causes graphical glitches with shaders">
-  PojavLauncher uses GL4ES to translate OpenGL calls for Android. Some shader effects that rely on OpenGL 4.x features may render incorrectly or cause crashes. Try a shader pack that explicitly targets GL4ES or OpenGL ES compatibility. Alternatively, use an OptiFine fork built for mobile environments if one is available for your Minecraft version.
+  PojavLauncher uses GL4ES to translate OpenGL calls for Android. Some shader effects that rely on OpenGL 4.x features may render incorrectly or cause crashes. Try a shader pack that explicitly targets GL4ES or OpenGL ES compatibility, or disable shaders entirely and use OptiFine only for its built-in performance optimisations.
 </Accordion>

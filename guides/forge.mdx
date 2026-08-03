@@ -1,5 +1,5 @@
 ---
-title: "Installing and Using Forge on PojavLauncher"
+title: "Installing Minecraft Forge on Android with PojavLauncher"
 sidebarTitle: "Forge"
 description: "Learn how to install Minecraft Forge on Android with PojavLauncher's built-in headless installer, manage Java versions, and add mods to your world."
 ---
@@ -38,11 +38,10 @@ PojavLauncher's Multi-Runtime feature selects the correct JDK automatically base
     The launcher downloads the Forge installer JAR to its cache directory. A progress bar tracks the transfer. On slow connections this may take a minute.
   </Step>
   <Step title="Headless installation runs automatically">
-    After the download, PojavLauncher launches a Java process with the Forge installer JAR and a custom `-javaagent` that drives the installer non-interactively:
+    After the download, PojavLauncher launches a Java process with the Forge installer JAR and a custom `-javaagent` that drives the installer non-interactively. The full argument string passed to the JVM looks like this:
 
     ```
-    -javaagent:<data_dir>/forge_installer/forge_installer.jar=NPS
-    -jar <cache_dir>/forge-installer.jar
+    -javaagent:<data_dir>/forge_installer/forge_installer.jar=NPS -jar <cache_dir>/forge-installer.jar
     ```
 
     The `NPS` flag (No Profile Suppression) tells the agent to create a launcher profile when installation completes. You will see the Minecraft installation screen while Forge libraries are being downloaded — this is normal.

@@ -1,5 +1,5 @@
 ---
-title: "Building PojavLauncher from Source on Android"
+title: "Building PojavLauncher from Source Code on Android"
 sidebarTitle: "Building from Source"
 description: "Step-by-step guide to compiling PojavLauncher from source: quick Gradle build plus detailed steps for JRE, LWJGL3, language list, GLFW stub, and final APK."
 ---
@@ -65,7 +65,7 @@ The repository is configured to download all pre-built native dependencies autom
 </Steps>
 
 <Note>
-  Gradle downloads around 4 GB of JVM args headroom is allocated (`-Xmx4096M`). Make sure your machine has at least 4 GB of RAM available for the build daemon.
+  Gradle downloads several gigabytes of dependencies on a clean build. The build daemon is allocated 4 GB of heap (`-Xmx4096M` in `gradle.properties`) — make sure your machine has at least 4 GB of RAM free before starting.
 </Note>
 
 ---
@@ -172,8 +172,9 @@ The `app_pojavlauncher` module defines several build types you can target:
 |---|---|
 | `assembleDebug` | Debug build with `.debug` application ID suffix — safe to install alongside the release APK |
 | `assembleRelease` | Release build (no minification by default to preserve `java.awt` references) |
-| `assembleProguard` | Debug variant with ProGuard minification enabled |
-| `assembleGplay` | Google Play release variant (requires keystore environment variables) |
+| `assembleProguard` | Debug variant with ProGuard minification and resource shrinking enabled |
+| `assembleProguardNoDebug` | Same as `proguard` but with `debuggable false` — suitable for non-Play release testing |
+| `assembleGplay` | Google Play release variant (requires `GPLAY_KEYSTORE_PASSWORD` environment variable) |
 
 <Note>
   The Gradle daemon is configured with `org.gradle.configureondemand=true` in `gradle.properties`. This is required because `jre_lwjgl3glfw` must compile with Java 8 while `app_pojavlauncher` uses plugins that require Java 11. Do not remove this setting.

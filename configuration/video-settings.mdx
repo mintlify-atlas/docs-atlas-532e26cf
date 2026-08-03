@@ -17,10 +17,9 @@ PojavLauncher exposes a dedicated **Video** settings screen that controls how Mi
 
   | Value | Description |
   |---|---|
-  | `opengles2` | OpenGL ES 2.0 via ANGLE. Broadest device compatibility. Recommended default. |
-  | `opengles3` | OpenGL ES 3.0 via ANGLE. Better visual fidelity; requires a GLES 3 capable GPU. |
-  | `vulkan_zink` | Gallium Zink — OpenGL over Vulkan. Highest potential performance on supported devices. |
-  | `opengles3_virgl` | VirGL renderer for OpenGL ES 3.0. Experimental; primarily used in virtualised environments. |
+  | `opengles2` | GL4ES 1.1.4 — translates OpenGL to OpenGL ES 2/3. Broadest device compatibility. Recommended default. |
+  | `vulkan_zink` | Gallium Zink — OpenGL over Vulkan via Mesa OSMesa. Best potential performance on Vulkan-capable devices. |
+  | `opengles3_ltw` | LTW renderer using OpenGL ES 3 with ANGLE EGL. Requires Minecraft 1.17 or later. |
 
   See [Renderers](/advanced/renderers) for a detailed comparison of each back-end, including known compatibility issues.
 </ParamField>

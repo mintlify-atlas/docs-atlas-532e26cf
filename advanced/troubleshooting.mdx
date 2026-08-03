@@ -1,7 +1,7 @@
 ---
-title: "Troubleshooting Common PojavLauncher Issues"
+title: "Troubleshooting PojavLauncher: Crashes and Common Issues"
 sidebarTitle: "Troubleshooting"
-description: "Fix crashes, black screens, slow downloads, oversized controls, Forge failures, input lag, and login errors in PojavLauncher with step-by-step solutions."
+description: "Fix crashes, black screens, slow downloads, oversized controls, Forge failures, input lag, and login errors in PojavLauncher with step-by-step fixes."
 ---
 
 PojavLauncher runs a full desktop JVM and an OpenGL translation layer on top of Android's graphics stack — that's an impressive feat, and it means the space for things to go wrong is a little wider than in a native app. This page covers the most common issues players encounter and how to resolve each one. Work through the relevant section below before posting in Discord or opening a GitHub issue; most problems have a quick fix.
@@ -81,8 +81,8 @@ The game loaded but nothing renders. This is almost always a renderer/driver com
 **Steps to fix:**
 
 1. Go to **Settings → Video → Renderer** and switch to a different backend:
-   - If you were using `vulkan_zink`, try `opengles3`.
-   - If you were using `opengles3`, try `opengles2`.
+   - If you were using `vulkan_zink`, try `opengles3_ltw` (requires GLES 3.0) or `opengles2`.
+   - If you were using `opengles3_ltw`, try `opengles2`.
    - `opengles2` is the most compatible and should work on virtually every device.
 2. Toggle **Alternate Surface** in **Settings → Video**. This switches between TextureView and SurfaceView rendering surfaces. Some GPU driver bugs only affect one of the two modes.
 3. Disable **Force VSync** in **Settings → Video**. A VSync misconfiguration can cause the frame to be presented before it is written on some drivers.
