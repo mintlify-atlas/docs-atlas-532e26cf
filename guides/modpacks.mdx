@@ -1,0 +1,198 @@
+---
+title: "Install Minecraft Modpacks in PojavLauncher Android"
+sidebarTitle: "Modpacks"
+description: "Browse and install Minecraft modpacks from Modrinth, CurseForge, and Technic directly inside PojavLauncher on Android."
+---
+
+A modpack bundles a curated set of mods, configuration files, and optional resource packs into a single installable package. Instead of manually downloading dozens of JARs and tweaking config files, you install one package and play. PojavLauncher integrates a full modpack browser directly into the app, supporting three platforms — Modrinth, CurseForge, and Technic — so you can search, install, and update modpacks without ever leaving the launcher.
+
+## Supported Platforms
+
+| Platform | Internal constant | Description |
+|---|---|---|
+| **Modrinth** | `SOURCE_MODRINTH = 0` | Open-source modding platform; uses `.mrpack` format |
+| **CurseForge** | `SOURCE_CURSEFORGE = 1` | The largest modpack catalogue; uses `.zip` + `manifest.json` |
+| **Technic** | `SOURCE_TECHNIC = 2` | Classic platform for modpacks like Tekkit and Hexxit |
+
+## Opening the Modpack Browser
+
+From the PojavLauncher main menu, tap the **Modpacks** button. The browser opens with a unified search bar at the top and platform tabs beneath it. Switch between Modrinth, CurseForge, and Technic using the tabs, or leave the default view to search across all platforms simultaneously.
+
+You can filter results by:
+- **Name** — type a search term in the search bar.
+- **Minecraft version** — tap the version filter chip and select the target game version.
+
+Results are sorted by relevance. Scroll down to load additional pages automatically.
+
+## Installing a Modpack from the Browser
+
+<Steps>
+  <Step title="Find the modpack">
+    Use the search bar and version filter to locate the modpack you want. Thumbnail images, names, and short descriptions are shown for each result. Tap a card to open the detail view.
+  </Step>
+  <Step title="Review details and select a version">
+    The detail view shows the full modpack description and a list of available versions with their corresponding Minecraft versions. Select the version you want to install from the drop-down.
+  </Step>
+  <Step title="Tap Install">
+    Tap the **Install** button. PojavLauncher downloads the modpack archive (`.mrpack` for Modrinth, `.zip` for CurseForge) and begins processing its manifest.
+  </Step>
+  <Step title="Mod files are downloaded">
+    PojavLauncher reads the manifest, resolves every mod file, and downloads them in parallel with progress displayed in the notification bar. For CurseForge packs this means fetching each `projectID`/`fileID` pair; for Modrinth packs, each file entry's `downloads` URL array is used with SHA-1 and SHA-512 integrity verification.
+  </Step>
+  <Step title="Profile is created automatically">
+    Once all files are in place, the launcher installs the required mod loader (Fabric, Quilt, or Forge) and creates a new launch profile. Select that profile in the version drop-down and tap **Play**.
+  </Step>
+</Steps>
+
+## Manifest Formats
+
+Understanding the manifest format helps if you need to troubleshoot a failed install or package a custom modpack.
+
+<Tabs>
+  <Tab title="CurseForge (manifest.json)">
+    CurseForge modpacks are distributed as a ZIP archive. PojavLauncher reads `manifest.json` from the root of the archive:
+
+    ```json
+    {
+      "manifestType": "minecraftModpack",
+      "manifestVersion": 1,
+      "name": "My Modpack",
+      "version": "1.0.0",
+      "author": "Author Name",
+      "minecraft": {
+        "version": "1.20.1",
+        "modLoaders": [
+          { "id": "forge-47.2.0", "primary": true }
+        ]
+      },
+      "files": [
+        { "projectID": 238222, "fileID": 4509575, "required": true },
+        { "projectID": 357178, "fileID": 4540286, "required": false }
+      ],
+      "overrides": "overrides"
+    }
+    ```
+
+    Key fields:
+
+    | Field | Description |
+    |---|---|
+    | `manifestType` | Must be `"minecraftModpack"` — PojavLauncher validates this before proceeding |
+    | `manifestVersion` | Must be `1` |
+    | `minecraft.version` | Target Minecraft version string |
+    | `minecraft.modLoaders` | Array of mod loader entries; the entry with `"primary": true` is used |
+    | `modLoaders[].id` | Loader identifier in `<name>-<version>` format (e.g. `fabric-0.15.11`) |
+    | `files[].projectID` | CurseForge project ID |
+    | `files[].fileID` | CurseForge file ID |
+    | `files[].required` | If `true`, a download failure causes the install to abort |
+    | `overrides` | Directory inside the ZIP copied verbatim to the instance folder |
+
+    <Warning>
+      Some CurseForge mods have `allowModDistribution` set to `false`. These mods cannot be downloaded automatically — the launcher will skip them and log a warning. You will need to download and add those JARs manually.
+    </Warning>
+  </Tab>
+  <Tab title="Modrinth (.mrpack)">
+    Modrinth modpacks use the `.mrpack` format, which is a ZIP archive containing a `modrinth.index.json` index file:
+
+    ```json
+    {
+      "formatVersion": 1,
+      "game": "minecraft",
+      "versionId": "1.2.0",
+      "name": "My Modrinth Pack",
+      "summary": "A short description of the pack.",
+      "dependencies": {
+        "minecraft": "1.20.1",
+        "fabric-loader": "0.15.11"
+      },
+      "files": [
+        {
+          "path": "mods/sodium-fabric-0.5.3.jar",
+          "hashes": {
+            "sha1": "ab12cd...",
+            "sha512": "deadbeef..."
+          },
+          "downloads": [
+            "https://cdn.modrinth.com/data/AANobbMI/versions/PnVA3p7m/sodium-fabric-mc1.20.1-0.5.3+mc1.20.1.jar"
+          ],
+          "fileSize": 874621,
+          "env": {
+            "client": "required",
+            "server": "optional"
+          }
+        }
+      ]
+    }
+    ```
+
+    Key fields:
+
+    | Field | Description |
+    |---|---|
+    | `game` | Always `"minecraft"` |
+    | `versionId` | The pack's own version string |
+    | `name` | Human-readable pack name |
+    | `summary` | Short description shown in the browser |
+    | `dependencies.minecraft` | Target Minecraft version |
+    | `dependencies.fabric-loader` | Fabric Loader version (if applicable) |
+    | `dependencies.quilt-loader` | Quilt Loader version (if applicable) |
+    | `dependencies.forge` | Forge version (if applicable) |
+    | `files[].path` | Destination path relative to the instance root |
+    | `files[].hashes.sha1` | SHA-1 checksum used for integrity verification |
+    | `files[].hashes.sha512` | SHA-512 checksum |
+    | `files[].downloads` | Array of mirror URLs; the first reachable URL is used |
+    | `files[].fileSize` | Expected file size in bytes |
+    | `files[].env.client` | `required`, `optional`, or `unsupported` for client-side usage |
+
+    After all index files are downloaded, PojavLauncher extracts the `overrides/` and `client-overrides/` directories from the archive into the instance folder.
+  </Tab>
+</Tabs>
+
+## Manual Installation
+
+If you have already downloaded a modpack archive outside of PojavLauncher (e.g. from a PC), you can import it directly.
+
+<Steps>
+  <Step title="Transfer the archive to your device">
+    Copy the `.zip` (CurseForge) or `.mrpack` (Modrinth) file to your device storage.
+  </Step>
+  <Step title="Open the file selector in PojavLauncher">
+    In the modpack browser, tap the **Import from file** option (folder icon in the top-right corner), or use the main menu's **Install modpack** entry.
+  </Step>
+  <Step title="Select the archive">
+    Navigate to the file in the system file-picker and tap it. PojavLauncher detects the format, parses the manifest, and runs the same install pipeline as the browser method.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+<Accordion title="Some mods fail to download from CurseForge">
+  CurseForge requires mod authors to opt in to third-party distribution. Mods that have not opted in cannot be downloaded programmatically. The launcher logs skipped mods as warnings. Download those mods manually from the CurseForge website on a PC, transfer the JARs to your device, and place them in the instance's `mods/` folder.
+</Accordion>
+
+<Accordion title="Modrinth install fails with a hash mismatch">
+  A hash mismatch means the downloaded file is corrupted or a CDN served an unexpected version. Delete the partially installed instance, clear the launcher cache in **Settings → Clear cache**, and try again. If the error persists for a specific file, report it to the modpack author as their index JSON may reference an outdated file hash.
+</Accordion>
+
+<Accordion title="The modpack browser shows no results">
+  Check that your device has an active internet connection. If you are searching CurseForge, note that results where `allowModDistribution` is `false` are automatically filtered out, which may reduce the visible result count. Try relaxing the Minecraft version filter or broadening the search term.
+</Accordion>
+
+<Accordion title="The game crashes immediately after launching a modpack profile">
+  The most common causes are:
+  - Wrong Java version for the target Minecraft version (see [Managing Java Runtimes](/advanced/multi-runtime)).
+  - The mod loader version bundled in the pack is not compatible with PojavLauncher's current Fabric/Forge installer.
+  - One or more required mods were not downloaded (e.g. a distribution-restricted CurseForge mod).
+  
+  Check the crash report in `<game_home>/.minecraft/crash-reports/` for the specific error.
+</Accordion>
+
+<Accordion title="Where are modpack instances stored?">
+  Each installed modpack creates its own subdirectory inside:
+
+  ```
+  <game_home>/.minecraft/
+  ```
+
+  Profiles are tracked in `launcher_profiles.json` in the same directory.
+</Accordion>

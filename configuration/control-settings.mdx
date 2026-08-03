@@ -1,0 +1,156 @@
+---
+title: "Control & Input Settings in PojavLauncher for Android"
+sidebarTitle: "Control Settings"
+description: "Tune touch gestures, virtual button size, mouse cursor behavior, gyroscope camera, and gamepad deadzone for the best Minecraft input experience on Android."
+---
+
+PojavLauncher provides a rich input layer that bridges Android's touchscreen, gyroscope, and physical controllers with Minecraft's keyboard-and-mouse model. The **Control** settings screen is divided into five categories: Gestures, Buttons, Virtual Mouse, Gyroscope, and Gamepad. Understanding each option helps you craft an input experience that feels natural for your play style and hardware.
+
+<Note>
+  The Gyroscope category is only shown when the device reports a gyroscope sensor via Android's sensor service. It will not appear on devices that lack this hardware.
+</Note>
+
+## Gestures
+
+<Accordion title="Disable All Gestures">
+  <ParamField path="disableGestures" type="boolean" default="false">
+    When enabled, all touch gesture recognition is turned off entirely. This includes swipe, pinch, double-tap, and long-press gestures used to simulate mouse buttons and camera movement. Useful when you want to rely entirely on a custom on-screen controller layout without any gesture interference.
+
+    <Note>
+      Enabling this option also hides the **Long Press Trigger** seekbar, since long-press is itself a gesture.
+    </Note>
+  </ParamField>
+</Accordion>
+
+<Accordion title="Disable Double-Tap (Swap Hand)">
+  <ParamField path="disableDoubleTap" type="boolean" default="false">
+    Disables the double-tap gesture that triggers the "swap item to off-hand" action (the `F` key in Java Edition). Turn this on if you find yourself accidentally swapping items while tapping to interact with the world.
+  </ParamField>
+</Accordion>
+
+<Accordion title="Long Press Trigger Delay">
+  <ParamField path="timeLongPressTrigger" type="integer (ms)" default="300">
+    How long (in milliseconds) you must hold a touch before it is recognised as a long-press, which simulates a right-click / secondary action. Lower values make right-clicking feel snappier; higher values reduce accidental triggers when you are simply moving the camera.
+
+    The seekbar displays the value with a ` ms` suffix. This preference is hidden when **Disable All Gestures** is active.
+  </ParamField>
+</Accordion>
+
+## Buttons
+
+<Accordion title="Button Scale">
+  <ParamField path="buttonscale" type="integer (percentage)" default="100">
+    Scales every on-screen control button globally by the given percentage (range: 1 – 200 %). At 100 % buttons render at their designed size. Increase this on tablets or high-DPI phones where the default buttons feel too small, or decrease it to reclaim screen space.
+
+    The seekbar displays the value with a ` %` suffix.
+  </ParamField>
+</Accordion>
+
+<Accordion title="Uppercase Button Labels">
+  <ParamField path="buttonAllCaps" type="boolean" default="true">
+    Controls whether button label text is rendered in ALL CAPS. Disable this for mixed-case labels if you find the default all-caps style harder to read at a glance.
+  </ParamField>
+</Accordion>
+
+## Virtual Mouse
+
+<Accordion title="Mouse Cursor Size">
+  <ParamField path="mousescale" type="integer (percentage)" default="100">
+    Scales the on-screen virtual mouse cursor relative to its default size. Raise this if you have trouble seeing the cursor, or lower it for a less intrusive overlay. The internal value is stored as `mousescale / 100f`.
+  </ParamField>
+</Accordion>
+
+<Accordion title="Mouse Sensitivity">
+  <ParamField path="mousespeed" type="integer (percentage)" default="100">
+    Controls how fast the virtual mouse cursor moves in response to touch drag input. The raw integer preference is divided by 100 to produce a float multiplier (e.g. 150 → 1.5×). Reduce this if cursor movement feels too twitchy; increase it if you need to cover large distances quickly.
+  </ParamField>
+</Accordion>
+
+<Accordion title="Start with Virtual Mouse Enabled">
+  <ParamField path="mouse_start" type="boolean" default="false">
+    When enabled, the virtual mouse cursor is shown and active as soon as the game loads, without requiring you to toggle it manually. Useful for modded instances with complex GUI menus that need pointer input immediately on launch.
+  </ParamField>
+</Accordion>
+
+## Gyroscope
+
+<Note>
+  All gyroscope sub-options (sensitivity, sample rate, smoothing, invert axes) are hidden until **Enable Gyroscope** is switched on. The entire Gyroscope category is hidden when no gyroscope sensor is available.
+</Note>
+
+<Accordion title="Enable Gyroscope">
+  <ParamField path="enableGyro" type="boolean" default="false">
+    Activates gyroscope-based camera control. When on, physically tilting or rotating the device moves the in-game camera, complementing touch-drag look input.
+  </ParamField>
+</Accordion>
+
+<Accordion title="Gyroscope Sensitivity">
+  <ParamField path="gyroSensitivity" type="integer (percentage)" default="100">
+    Scales how strongly gyroscope rotation maps to camera movement. The raw integer is divided by 100 internally (e.g. 200 → 2.0× multiplier). Increase for faster camera response; decrease if slight device wobble causes unwanted camera drift.
+
+    Only visible when **Enable Gyroscope** is on.
+  </ParamField>
+</Accordion>
+
+<Accordion title="Gyroscope Sample Rate">
+  <ParamField path="gyroSampleRate" type="integer (ms)" default="16">
+    How frequently (in milliseconds) the launcher reads the gyroscope sensor. Lower values (e.g. 8 ms) increase responsiveness and reduce perceived latency but consume more CPU. Higher values save battery at the cost of slightly choppier camera motion.
+
+    Only visible when **Enable Gyroscope** is on.
+  </ParamField>
+</Accordion>
+
+<Accordion title="Gyroscope Smoothing">
+  <ParamField path="gyroSmoothing" type="boolean" default="true">
+    Applies a low-pass filter to gyroscope samples to reduce jitter caused by hand tremor or sensor noise. Disable this only if you want the rawest, lowest-latency gyro input (e.g. for competitive play with a stable mount).
+
+    Only visible when **Enable Gyroscope** is on.
+  </ParamField>
+</Accordion>
+
+<Accordion title="Invert X Axis">
+  <ParamField path="gyroInvertX" type="boolean" default="false">
+    Inverts the horizontal (yaw) axis of gyroscope camera movement. Enable this if tilting the device left moves the camera right and you want the opposite behaviour.
+
+    Only visible when **Enable Gyroscope** is on.
+  </ParamField>
+</Accordion>
+
+<Accordion title="Invert Y Axis">
+  <ParamField path="gyroInvertY" type="boolean" default="false">
+    Inverts the vertical (pitch) axis of gyroscope camera movement. Enable this if tilting the device up moves the camera down and you prefer the opposite.
+
+    Only visible when **Enable Gyroscope** is on.
+  </ParamField>
+</Accordion>
+
+## Gamepad
+
+<Accordion title="Remap Controller">
+  Opens the **Gamepad Mapper** screen (`GamepadMapperFragment`), where you can reassign every physical button and axis on a connected Bluetooth or USB gamepad to any in-game action. Changes are persisted per-device.
+</Accordion>
+
+<Accordion title="Wipe Controller Remapping">
+  Resets all gamepad button and axis mappings back to their factory defaults. This action uses `GamepadRemapPreference` and cannot be undone — you will need to redo any custom mappings manually.
+
+  <Warning>
+    This immediately erases all saved remappings for every connected controller. Use it only when you want to start fresh.
+  </Warning>
+</Accordion>
+
+<Accordion title="Gamepad Deadzone Scale">
+  <ParamField path="gamepad_deadzone_scale" type="integer (percentage)" default="100">
+    Adjusts the size of the joystick deadzone — the central region where stick movement is ignored. The raw integer is divided by 100 internally. Increase this if your controller's thumbsticks drift when at rest (a sign of stick wear); decrease it for more precise, low-input-threshold response.
+  </ParamField>
+</Accordion>
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Custom Controls Guide" icon="gamepad" href="/guides/controls">
+    Learn how to create, import, and share custom on-screen control layouts.
+  </Card>
+  <Card title="Custom Controls Format" icon="code" href="/advanced/custom-controls-format">
+    Full reference for the JSON schema used by `.json` control layout files.
+  </Card>
+</CardGroup>

@@ -1,0 +1,104 @@
+---
+title: "Managing Minecraft Accounts in PojavLauncher"
+sidebarTitle: "Accounts"
+description: "Add Microsoft (Xbox Live) or offline local accounts to PojavLauncher, understand how tokens are stored, and switch between accounts on Android."
+---
+
+PojavLauncher supports two distinct account types: authenticated **Microsoft (Xbox Live)** accounts that can join online servers and access your purchased copy of Minecraft, and **local offline** accounts that let you play singleplayer or LAN worlds without any internet credentials. Both types are managed from the same account spinner on the main screen, and each account's data is stored as a small JSON file inside the launcher's internal data directory.
+
+<Warning>
+  **PojavLauncher has been discontinued.** Its successor is [Amethyst Android](https://github.com/AngelAuraMC/Amethyst-Android). These docs describe the final released state of PojavLauncher.
+</Warning>
+
+## Adding an Account
+
+Tap the account spinner at the top of the main screen (it shows the currently active username and skin face), then tap **Add account**. You will be taken to the auth-method selection screen where you can choose between Microsoft and local login.
+
+<Tabs>
+  <Tab title="Microsoft (Xbox Live)">
+    Microsoft login uses an in-app OAuth 2.0 web view that loads the official `login.live.com` authorization page. No credentials are stored by the launcher itself — only the resulting tokens are saved.
+
+    <Steps>
+      <Step title="Tap 'Microsoft Account'">
+        On the auth-method selection screen, tap **Microsoft Account**. An in-app browser opens pointing to the Microsoft Live sign-in page.
+      </Step>
+      <Step title="Sign in with your Microsoft account">
+        Enter the email address and password associated with the Microsoft account that owns your Minecraft: Java Edition licence. Complete any two-factor authentication (2FA) prompts that appear.
+      </Step>
+      <Step title="Wait for the launcher to finish authentication">
+        After you grant access, the launcher receives an authorization code and automatically exchanges it for an Xbox Live token, an XSTS token, and finally a Minecraft access token. A short toast — "Login started!" — confirms the process has begun. The main menu reloads once authentication is complete.
+      </Step>
+      <Step title="Confirm your account appears in the spinner">
+        The account spinner now shows your Minecraft username alongside your skin face. Your account is ready to use.
+      </Step>
+    </Steps>
+
+    <Note>
+      Microsoft tokens expire after a fixed period. PojavLauncher refreshes them automatically using the stored `msaRefreshToken` when you launch the game — you do not need to log in again manually unless you revoke access or change your password.
+    </Note>
+  </Tab>
+  <Tab title="Local (Offline)">
+    Local accounts are purely offline. No password is required and no network request is made. These accounts can play singleplayer worlds and LAN games, but cannot connect to online-mode servers.
+
+    <Steps>
+      <Step title="Tap 'Local Account'">
+        On the auth-method selection screen, tap **Local Account**. A simple username entry field appears.
+      </Step>
+      <Step title="Enter a username">
+        Type a username between **3 and 16 characters** using only letters (`a–z`, `A–Z`), digits (`0–9`), and underscores (`_`). The launcher rejects usernames that contain spaces or special characters, and will also refuse a name that is already in use by another saved account.
+      </Step>
+      <Step title="Tap 'Log in'">
+        The launcher creates an account file immediately and returns to the main menu. No network request is made.
+      </Step>
+    </Steps>
+
+    <Tip>
+      If you want to play a Minecraft demo, create a local account whose username begins with `Demo.` (for example, `Demo.Steve`). The launcher treats this as a demo account and restricts play accordingly.
+    </Tip>
+  </Tab>
+</Tabs>
+
+## Switching Accounts
+
+Tap the account spinner at the top of the main screen. A dropdown lists all saved accounts with their skin faces. Tap any entry to make it the active account. The change takes effect immediately — the next time you press **Play**, the game launches with the newly selected account.
+
+## Account Storage
+
+Each account is persisted as a JSON file inside the launcher's private internal storage:
+
+```
+<internal_data>/accounts/<username>.json
+```
+
+The file contains the following fields:
+
+| Field | Description |
+|---|---|
+| `username` | The Minecraft in-game name |
+| `profileId` | The player's UUID (used to fetch the skin face) |
+| `accessToken` | The current Minecraft session token; `"0"` for local accounts |
+| `clientToken` | The client identifier used to refresh/invalidate sessions; `"0"` for local accounts |
+| `isMicrosoft` | `true` for Microsoft accounts, `false` for local |
+| `msaRefreshToken` | The long-lived Microsoft refresh token; `"0"` for local accounts |
+| `xuid` | The Xbox User ID linked to this account |
+| `expiresAt` | Unix timestamp (ms) when the current `accessToken` expires |
+| `skinFaceBase64` | Legacy: skin head image encoded as Base64 (newer versions use a cache file) |
+
+<Note>
+  The skin face is separately cached as a PNG at `<internal_data>/cache/<username>.png` and is downloaded from `https://mc-heads.net/head/<uuid>/100`. If the device has no internet connection the cache file is simply not updated — the launcher continues to function normally.
+</Note>
+
+## Removing an Account
+
+Account files can be deleted manually from `<internal_data>/accounts/` using a file manager with root or internal-storage access, or through the account spinner's remove option if your build includes it. After deletion, the account no longer appears in the spinner. If the deleted account was the active one, you must select a different account before launching the game.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Playing the Game" icon="play" href="/guides/playing">
+    Learn how the main screen works and how to launch your first game session.
+  </Card>
+  <Card title="Profiles" icon="sliders" href="/guides/profiles">
+    Create separate profiles for different Minecraft versions or game directories.
+  </Card>
+</CardGroup>

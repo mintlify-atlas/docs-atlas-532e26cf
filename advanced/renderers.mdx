@@ -1,0 +1,167 @@
+---
+title: "Rendering Backends in PojavLauncher Explained"
+sidebarTitle: "Renderers"
+description: "Compare every PojavLauncher rendering backend — GL4ES, Vulkan Zink, and VirGL — and learn which renderer gives the best performance for your GPU and Minecraft version."
+---
+
+PojavLauncher cannot use OpenGL directly on Android the way a desktop JVM can. Instead it ships several **rendering backends** that translate Minecraft's OpenGL calls into something an Android GPU can execute. Choosing the right backend for your hardware and Minecraft version is one of the most impactful performance decisions you can make. This page explains every available renderer, when to use each one, and how to configure them.
+
+## How renderer selection works internally
+
+When PojavLauncher starts the JVM, `JREUtils.loadGraphicsLibrary()` maps the active renderer name to a shared library:
+
+| Renderer name       | Native library loaded   |
+|---------------------|-------------------------|
+| `opengles2`         | `libgl4es_114.so`       |
+| `opengles2_5`       | `libgl4es_114.so`       |
+| `opengles3`         | `libgl4es_114.so`       |
+| `vulkan_zink`       | `libOSMesa.so`          |
+| `opengles3_ltw`     | `libltw.so` (ANGLE EGL) |
+
+The renderer name is stored in the `renderer` shared preference key (`LauncherPreferences.PREF_RENDERER`, default `"opengles2"`) and can also be overridden per-launch via the environment variable `POJAV_RENDERER`.
+
+---
+
+## Available renderers
+
+### opengles2 — GL4ES on OpenGL ES 2.0
+
+The **default** renderer and the most compatible option. GL4ES 1.1.4 (shipped as `libgl4es_114.so`) translates OpenGL 1.x/2.x calls from Minecraft into OpenGL ES 2.0 calls that any modern Android GPU can execute.
+
+**Best for:**
+- Minecraft 1.0 through 1.16.5 (older Minecraft versions use fewer modern OpenGL features)
+- Devices with older or budget GPUs that may not support GLES 3.0 reliably
+- Troubleshooting — if another renderer crashes, fall back here first
+
+**Environment variables set automatically:**
+
+```
+LIBGL_ES=2
+LIBGL_MIPMAP=3
+LIBGL_NOERROR=1
+LIBGL_NOINTOVLHACK=1
+LIBGL_NORMALIZE=1
+```
+
+---
+
+### opengles3 — GL4ES on OpenGL ES 3.0
+
+The same GL4ES translation library, but PojavLauncher instructs it to target **OpenGL ES 3.0** by setting `LIBGL_ES=3`. This unlocks additional OpenGL features that GLES 3.0 exposes — particularly the geometry and framebuffer capabilities that Minecraft 1.17+ relies on for its updated rendering engine.
+
+**Best for:**
+- Minecraft 1.17 and newer on mid-range to flagship devices
+- Any GPU with solid GLES 3.0 driver support (most devices released after 2016)
+
+**Environment variables set automatically:**
+
+```
+LIBGL_ES=3
+```
+
+<Note>
+If your device reports a GLES version lower than 3.0 at runtime, PojavLauncher automatically falls back to `LIBGL_ES=2` regardless of which renderer you selected.
+</Note>
+
+---
+
+### vulkan_zink — Mesa Zink (OpenGL over Vulkan)
+
+The **highest-performance** renderer for supported hardware. Mesa's [Zink](https://docs.mesa3d.org/drivers/zink.html) driver implements OpenGL on top of Vulkan. PojavLauncher ships this as `libOSMesa.so`. On Adreno and Mali GPUs that have mature Vulkan 1.1+ drivers, Zink bypasses many of GL4ES's translation overhead layers entirely.
+
+**Best for:**
+- Flagship Adreno 600-series and newer (Snapdragon 845+)
+- Flagship Mali GPUs (Exynos / MediaTek with good Vulkan drivers)
+- Minecraft 1.17+ where you want maximum draw call throughput
+
+**Minimum requirement:** Vulkan 1.1 support on the device.
+
+#### Zink-specific settings
+
+| Setting key                  | Preference constant            | Description |
+|------------------------------|-------------------------------|-------------|
+| `zinkPreferSystemDriver`     | `PREF_ZINK_PREFER_SYSTEM_DRIVER` | When `true`, PojavLauncher uses the device's system Vulkan driver instead of loading the bundled Mesa Turnip driver. On non-Adreno GPUs, leave this enabled. On Adreno GPUs, the bundled Turnip driver is usually superior — this preference is `false` by default. |
+| `vsync_in_zink`              | `PREF_VSYNC_IN_ZINK`           | Controls VSync specifically for the Zink backend. Sets `POJAV_VSYNC_IN_ZINK=1` in the JVM environment. Defaults to `true`. |
+
+When `PREF_ZINK_PREFER_SYSTEM_DRIVER` is `false` on an Adreno GPU, PojavLauncher sets `POJAV_LOAD_TURNIP=1`, which loads the bundled Mesa Turnip Vulkan driver in place of the system driver.
+
+The Vulkan library path is passed via `-Dorg.lwjgl.vulkan.libname=libvulkan.so`.
+
+---
+
+### opengles3_virgl — VirGL (experimental)
+
+VirGL is a GPU virtualization renderer originally designed for QEMU virtual machines. PojavLauncher includes it as an experimental option — it communicates with a VirGL test server socket at `<cache>/.virgl_test`. Performance and compatibility are unpredictable on real Android hardware.
+
+**Use only for:** Testing and experimentation. Not recommended for regular gameplay.
+
+---
+
+## How to change the renderer
+
+### Global setting
+
+<Steps>
+  <Step title="Open Settings">
+    From the main launcher screen, tap the **Settings** (gear) icon.
+  </Step>
+  <Step title="Go to Video">
+    Tap **Video** in the settings menu.
+  </Step>
+  <Step title="Select a renderer">
+    Tap **Renderer** and choose from the list. The choice is saved immediately as the `renderer` preference.
+  </Step>
+</Steps>
+
+### Per-profile override
+
+Open the **Profile Editor** for a specific profile and set the `pojavRendererName` field to one of the renderer name strings listed in the table above. A per-profile renderer overrides the global setting only for that profile.
+
+---
+
+## Surface mode: TextureView vs SurfaceView
+
+PojavLauncher can render into either a `TextureView` or a `SurfaceView`. The setting is controlled by `alternate_surface` (`PREF_USE_ALTERNATE_SURFACE`).
+
+| Mode | Setting | Notes |
+|------|---------|-------|
+| TextureView | `alternate_surface = false` | Default on lower-end devices. More flexible compositing. |
+| SurfaceView | `alternate_surface = true`  | Default on powerful devices. Lower latency; fixes rendering glitches on some GPU/driver combinations. |
+
+If you see flickering, a black game area, or visual corruption, try toggling **Alternate Surface** in **Settings → Video**.
+
+---
+
+## VSync and performance options
+
+| Setting key          | Preference constant         | Effect |
+|----------------------|-----------------------------|--------|
+| `force_vsync`        | `PREF_FORCE_VSYNC`          | Sets `FORCE_VSYNC=true` in the JVM environment. Eliminates screen tearing at the cost of locking the frame rate to the display refresh rate. Defaults to `true` on powerful devices. |
+| `vsync_in_zink`      | `PREF_VSYNC_IN_ZINK`        | VSync specifically inside the Zink pipeline (see above). |
+| `dump_shaders`       | `PREF_DUMP_SHADERS`         | Sets `LIBGL_VGPU_DUMP=1`. Dumps compiled shaders to disk for debugging GL4ES issues. |
+| `bigCoreAffinity`    | `PREF_BIG_CORE_AFFINITY`    | Sets `POJAV_BIG_CORE_AFFINITY=1`. Pins the JVM to big cores on asymmetric (big.LITTLE) CPUs for more consistent frame times. |
+| `sustainedPerformance` | `PREF_SUSTAINED_PERFORMANCE` | Enables Android's sustained performance mode to prevent thermal throttling over long play sessions. |
+
+---
+
+## Renderer selection guide
+
+```
+Is your device running Minecraft 1.16.5 or older?
+  └── Yes → use opengles2
+
+Does your device have Vulkan 1.1+ (Adreno 600+ or Mali G76+)?
+  └── Yes → try vulkan_zink first
+      └── Crashes or broken graphics? → fall back to opengles3
+
+Running Minecraft 1.17+, no Vulkan or unstable Vulkan?
+  └── use opengles3
+
+Seeing graphical glitches with any renderer?
+  └── Toggle Alternate Surface in Settings → Video
+  └── Disable force_vsync and try again
+```
+
+<Warning>
+On **32-bit** devices (ARMv7 / x86), Vulkan is rarely available and GL4ES has tighter memory constraints. Stick to `opengles2` and keep RAM allocation at or below 696 MB.
+</Warning>

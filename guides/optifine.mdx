@@ -1,0 +1,117 @@
+---
+title: "Install OptiFine for Better Graphics in PojavLauncher"
+sidebarTitle: "OptiFine"
+description: "Install OptiFine on PojavLauncher for Android to improve Minecraft graphics performance, enable HD textures, and run shaders."
+---
+
+OptiFine is a Minecraft graphics-optimization mod that dramatically reduces rendering overhead, adds support for HD resource packs, and unlocks shader pipeline support through the GLSL Shaders API. On mobile hardware — where GPU memory bandwidth and driver maturity vary widely — OptiFine's render-distance controls, dynamic lighting toggles, and smooth lighting options are especially valuable. PojavLauncher ships a built-in OptiFine installer so you never have to manually sideload a JAR or patch a profile by hand; the launcher handles version discovery, download, and profile creation for you.
+
+<Warning>
+  OptiFine is **not compatible** with Fabric or Quilt. If you want shader support alongside Fabric mods, consider [Iris Shaders](https://irisshaders.net/) paired with Sodium instead. Do not add OptiFine to a Fabric or Quilt profile.
+</Warning>
+
+## Installing OptiFine via the Built-in Installer
+
+This is the recommended path. PojavLauncher scrapes the official OptiFine downloads page to build a version list, then downloads and installs the correct JAR for you.
+
+<Steps>
+  <Step title="Open the mod-loader installer">
+    From the PojavLauncher main menu, tap the **Install mod loader** button (the puzzle-piece icon beneath the version selector).
+  </Step>
+  <Step title="Select OptiFine">
+    In the installer dialog, choose **OptiFine** from the list of available loaders.
+  </Step>
+  <Step title="Wait for the version list to load">
+    PojavLauncher fetches and parses the OptiFine downloads page (`https://optifine.net/downloads`) using its built-in `OptiFineScraper` / `OFDownloadPageScraper`. This produces a grouped list of available OptiFine versions, organised by Minecraft version. Allow a moment for the request to complete.
+  </Step>
+  <Step title="Select your OptiFine version">
+    Choose the Minecraft version group you need, then pick a specific OptiFine build (for example, `OptiFine_1.20.1_HD_U_I6`). Preview builds are available in addition to stable releases; stable releases are recommended for everyday use.
+  </Step>
+  <Step title="Installation runs automatically">
+    PojavLauncher:
+    1. Scrapes the individual download page to resolve the direct download URL.
+    2. Downloads the base Minecraft version if it is not already present.
+    3. Downloads the OptiFine installer JAR to the launcher cache.
+    4. Runs the installer using a bundled Java agent (`forge_installer.jar`) in `OFNPS` (No Profile Suppression) mode.
+    5. Creates a new launch profile in `launcher_profiles.json` automatically.
+
+    A progress bar is shown throughout. Once complete, the new OptiFine profile appears in the version selector.
+  </Step>
+</Steps>
+
+## Installing OptiFine Manually (Sideload a JAR)
+
+If you have already downloaded an OptiFine installer JAR from [optifine.net](https://optifine.net/adloadx?f=OptiFine_1.20.1_HD_U_I6.jar) on a PC and transferred it to your device, you can install it without going through the built-in version browser.
+
+<Steps>
+  <Step title="Transfer the JAR to your device">
+    Copy the downloaded `OptiFine_<version>.jar` to accessible storage on your Android device (e.g. `Downloads/`).
+  </Step>
+  <Step title="Use Install JAR">
+    From the PojavLauncher main menu, tap **Install JAR** (also found under the mod-loader install button). Navigate to and select the OptiFine JAR file in the file-picker.
+  </Step>
+  <Step title="Complete the installation">
+    The launcher runs the same install pipeline as the automatic method — downloading the base Minecraft version if needed and creating the launch profile.
+  </Step>
+</Steps>
+
+## Using Shaders with OptiFine
+
+OptiFine's shader pipeline is supported in PojavLauncher via the GL4ES OpenGL compatibility layer.
+
+<Steps>
+  <Step title="Create a shaderpacks folder">
+    In your game home directory, create the folder:
+
+    ```
+    <game_home>/.minecraft/shaderpacks/
+    ```
+  </Step>
+  <Step title="Copy your shader pack">
+    Place your shader pack ZIP (e.g. `BSL_v8.2.zip`) directly inside `shaderpacks/`. Do **not** unzip it.
+  </Step>
+  <Step title="Select the shader in-game">
+    Launch Minecraft with the OptiFine profile. Navigate to **Options → Video Settings → Shaders**, then select your shader pack from the list.
+  </Step>
+</Steps>
+
+<Note>
+  Shader performance depends heavily on your device's GPU. High-end shaders (BSL, Complementary) may run slowly or not at all on mid-range hardware. Lightweight shader packs designed for mobile or low-spec machines (e.g. Potato Shaders) are a better starting point.
+</Note>
+
+## Java Version Requirements
+
+<Warning>
+  OptiFine for Minecraft 1.17 and later requires **Java 17**. OptiFine for 1.20.5+ requires **Java 21**. Launching with the wrong Java version will produce an `UnsupportedClassVersionError` crash. Ensure the correct JRE is installed and selected for your OptiFine profile.
+</Warning>
+
+| Minecraft version | Required JRE |
+|---|---|
+| 1.16.5 and earlier | Java 8 |
+| 1.17 – 1.20.4 | Java 17 |
+| 1.20.5 and later | Java 21 |
+
+<Tip>
+  See [Managing Java Runtimes](/advanced/multi-runtime) for instructions on installing additional JRE versions inside PojavLauncher.
+</Tip>
+
+## Troubleshooting
+
+<Accordion title="The OptiFine version list is empty or fails to load">
+  The launcher scrapes `optifine.net` in real time. If the site is unreachable or returns an unexpected page layout, the scraper will return no results. Check your internet connection. If the problem persists, use the manual JAR install method instead.
+</Accordion>
+
+<Accordion title="OptiFine installation fails with 'Data not available'">
+  This usually means the individual OptiFine download page returned a captcha or a format the scraper does not recognise. Download the JAR on a PC and use the **Install JAR** method as a workaround.
+</Accordion>
+
+<Accordion title="Game crashes on launch with OptiFine">
+  Common causes:
+  - Wrong Java version selected for the Minecraft version (see table above).
+  - A Fabric or Quilt mod is present in the `mods/` folder — OptiFine cannot coexist with these loaders.
+  - The shader pack is incompatible with GL4ES. Try disabling shaders first to confirm OptiFine itself runs.
+</Accordion>
+
+<Accordion title="OptiFine causes graphical glitches with shaders">
+  PojavLauncher uses GL4ES to translate OpenGL calls for Android. Some shader effects that rely on OpenGL 4.x features may render incorrectly or cause crashes. Try a shader pack that explicitly targets GL4ES or OpenGL ES compatibility. Alternatively, use an OptiFine fork built for mobile environments if one is available for your Minecraft version.
+</Accordion>

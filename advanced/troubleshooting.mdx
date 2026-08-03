@@ -1,0 +1,240 @@
+---
+title: "Troubleshooting Common PojavLauncher Issues"
+sidebarTitle: "Troubleshooting"
+description: "Fix crashes, black screens, slow downloads, oversized controls, Forge failures, input lag, and login errors in PojavLauncher with step-by-step solutions."
+---
+
+PojavLauncher runs a full desktop JVM and an OpenGL translation layer on top of Android's graphics stack — that's an impressive feat, and it means the space for things to go wrong is a little wider than in a native app. This page covers the most common issues players encounter and how to resolve each one. Work through the relevant section below before posting in Discord or opening a GitHub issue; most problems have a quick fix.
+
+---
+
+## Crashes and launch failures
+
+<AccordionGroup>
+
+<Accordion title="Game crashes on launch with 'Out of memory' or 'GC overhead limit exceeded'">
+
+These errors mean the Java heap ran out of space. Minecraft itself is memory-hungry, and on Android you're competing with the OS and background apps.
+
+**Steps to fix:**
+
+1. Go to **Settings → Java → Memory Allocation** and increase the RAM slider.
+2. Use the auto-allocation table below as a starting point, then add 256–512 MB if you're using heavy modpacks.
+3. Do **not** set RAM higher than roughly 75% of your device's total physical RAM — leaving headroom for the OS prevents hard crashes and ANR dialogs.
+
+**Auto-allocation defaults** (from `LauncherPreferences.findBestRAMAllocation`):
+
+| Device RAM  | Default allocation |
+|-------------|--------------------|
+| < 1 024 MB  | 296 MB             |
+| < 1 536 MB  | 448 MB             |
+| < 2 048 MB  | 656 MB             |
+| 32-bit device (any) | **max 696 MB** |
+| < 3 064 MB  | 936 MB             |
+| < 4 096 MB  | 1 144 MB           |
+| < 6 144 MB  | 1 536 MB           |
+| ≥ 6 144 MB  | 2 048 MB           |
+
+<Warning>
+On **32-bit** devices the hard ceiling is approximately **696 MB**. Exceeding it causes the JVM to crash at startup because the 32-bit address space cannot map a larger heap.
+</Warning>
+
+The allocation is passed to the JVM as matching `-Xms` and `-Xmx` arguments. Any `-Xms`/`-Xmx` in the custom Java arguments field are automatically stripped and replaced with the preference value.
+</Accordion>
+
+<Accordion title="Forge or Fabric installation fails">
+
+Mod loaders are sensitive to the Java version used during installation.
+
+**Requirements:**
+
+| Minecraft range | Required Java |
+|-----------------|---------------|
+| 1.0 – 1.16.5    | Java 8        |
+| 1.17 – 1.20.4   | Java 17       |
+| 1.20.5+         | Java 21       |
+
+**Steps to fix:**
+
+1. Open **Settings → Java** and confirm you have the correct runtime installed for your target version. See the [Multi-Runtime guide](/advanced/multi-runtime) for install instructions.
+2. Check that the profile's Java override points to the right major version.
+3. If the installer still fails, tap **Share Logs** on the main screen and look for lines containing `UnsupportedClassVersionError` or `requires Java` — these pinpoint the exact version mismatch.
+4. Some Forge versions require running the installer with specific JVM flags. Add them in **Settings → Java → Custom Java Arguments**.
+
+<Note>
+Fabric's installer is more tolerant of Java versions, but Forge 1.17+ strictly requires Java 17 or higher. Using Java 8 with a 1.17+ Forge profile always fails.
+</Note>
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Graphics and display problems
+
+<AccordionGroup>
+
+<Accordion title="Black screen or white screen after the loading bar completes">
+
+The game loaded but nothing renders. This is almost always a renderer/driver compatibility issue.
+
+**Steps to fix:**
+
+1. Go to **Settings → Video → Renderer** and switch to a different backend:
+   - If you were using `vulkan_zink`, try `opengles3`.
+   - If you were using `opengles3`, try `opengles2`.
+   - `opengles2` is the most compatible and should work on virtually every device.
+2. Toggle **Alternate Surface** in **Settings → Video**. This switches between TextureView and SurfaceView rendering surfaces. Some GPU driver bugs only affect one of the two modes.
+3. Disable **Force VSync** in **Settings → Video**. A VSync misconfiguration can cause the frame to be presented before it is written on some drivers.
+4. If the screen is white (not black), it may be a shader compilation error with GL4ES. Enable **Dump Shaders** in the experimental settings to capture the failing shader source for debugging.
+
+For a full explanation of each renderer and when to use it, see [Rendering Backends](/advanced/renderers).
+</Accordion>
+
+<Accordion title="Flickering, rendering glitches, or corrupted textures">
+
+1. Toggle **Alternate Surface** (SurfaceView ↔ TextureView) in **Settings → Video**.
+2. On Adreno GPUs, ensure `zinkPreferSystemDriver` is **disabled** so the bundled Turnip driver is used instead of the system driver.
+3. Try a different renderer. GL4ES and Zink handle fragment shaders differently; a mod or shader pack may work with one but not the other.
+4. Disable OptiFine or any shader pack — many desktop shaders use GLSL features that GL4ES does not fully support.
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Download and installation problems
+
+<AccordionGroup>
+
+<Accordion title="Game stuck at 'Downloading' or downloads are very slow">
+
+1. Verify your device has an active internet connection and that the PojavLauncher app has the **Internet** permission granted in Android Settings → Apps.
+2. In **Settings → Experimental**, try switching **Download Source** to an alternative mirror. The preference key is `downloadSource` (`PREF_DOWNLOAD_SOURCE`).
+3. If specific library files are stuck in a repeated download loop, disable **Check Library SHA** in Experimental settings (`PREF_CHECK_LIBRARY_SHA`). This skips SHA-256 verification and allows existing files to be reused even if their checksum doesn't match the manifest. Re-enable this after the issue is resolved to keep your installation secure.
+4. Disable **Verify Manifest** (`PREF_VERIFY_MANIFEST`) if the version manifest itself fails to download — this uses a cached copy.
+
+<Warning>
+Disabling SHA verification reduces the integrity guarantees of your Minecraft installation. Only use it as a temporary workaround and re-enable it once your connectivity issue is resolved.
+</Warning>
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Controls and input
+
+<AccordionGroup>
+
+<Accordion title="On-screen controls are too small or too large">
+
+1. Go to **Settings → Controls → Button Scale** (`PREF_BUTTONSIZE`). The default is `100` (100%). Increase it for larger buttons, decrease for smaller.
+2. For fine-grained control, open the **Custom Controls editor** (long-press the controls layout selector or tap the edit icon). You can resize and reposition individual buttons by dragging their handles. Width and height are stored in dp, so changes scale correctly across screen sizes.
+3. If you share a layout between devices, be aware that `scaledAt` in the JSON records the scale at save time — importing a layout saved at 150% scale on a tablet onto a phone will use that scale until you re-save.
+
+See the [Custom Controls Format reference](/advanced/custom-controls-format) for layout file details.
+</Accordion>
+
+<Accordion title="Input lag, cursor drift, or erratic mouse movement">
+
+1. Lower **Mouse Speed** in **Settings → Controls** (`PREF_MOUSESPEED`, default `1.0`). High values amplify small finger movements into large cursor jumps.
+2. If **Gyroscope** controls are enabled (`PREF_ENABLE_GYRO`), disable them in **Settings → Controls → Gyro** unless you are actively using gyro aiming. Gyro input adds to cursor movement and can cause drift if the device is not held perfectly still.
+3. Enable **Big Core Affinity** in **Settings → Experimental** (`PREF_BIG_CORE_AFFINITY`). On devices with asymmetric CPU clusters (big.LITTLE), the JVM may be scheduled onto efficiency cores that don't process input events fast enough. Pinning to big cores (`POJAV_BIG_CORE_AFFINITY=1`) reduces input pipeline latency.
+4. Reduce the **Gyro Sample Rate** (`PREF_GYRO_SAMPLE_RATE`, default 16 ms) if you keep gyro enabled but want smoother, less jittery aiming.
+5. Disable **Gestures** (`PREF_DISABLE_GESTURES`) if swipe-to-look conflicts with other touch inputs.
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Account and authentication
+
+<AccordionGroup>
+
+<Accordion title="Microsoft login fails, shows a blank page, or token expired">
+
+Microsoft OAuth tokens are valid for a limited time and refresh automatically, but occasionally the local token cache becomes stale or corrupt.
+
+**Steps to fix:**
+
+1. On the launcher's account screen, **remove** the affected Microsoft account.
+2. Tap **Add Account → Microsoft** and complete the login flow fresh. A full re-authentication issues a new token pair.
+3. Ensure your device's **system clock is accurate**. OAuth token validation is time-sensitive; a clock that is more than a few minutes off will cause every authentication attempt to fail with a cryptic error.
+4. Confirm your device has an active internet connection. The login flow requires several sequential HTTPS round-trips to `login.microsoft.com`, `login.live.com`, and `api.minecraftservices.com`.
+5. If you are behind a corporate or school network with TLS inspection, the intercepted certificates will cause the login flow to fail. Try using mobile data instead.
+
+<Note>
+Account data is stored in `<internal_data>/accounts/`. PojavLauncher never stores your Microsoft password — only the OAuth access and refresh tokens.
+</Note>
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Collecting and sharing logs
+
+<AccordionGroup>
+
+<Accordion title="How to share crash logs with the community">
+
+Good logs are essential for getting help. Here's how to collect them:
+
+**In-game log viewer:**
+- During gameplay, swipe down from the top of the screen (or tap the log icon if your layout has one) to open the real-time log viewer.
+- The viewer captures output from logcat filtered to the `jrelog`, `LIBGL`, and `NativeInput` tags.
+
+**Share Logs button:**
+- After a crash (or at any time from the main launcher screen), tap **Share Logs**. This packages the most recent log into a shareable text file via Android's share sheet.
+- Logs are collected via `Tools.shareLog()`.
+
+**Crash reports:**
+- Minecraft writes Java-level crash reports to:
+  ```
+  <game_home>/.minecraft/crash-reports/
+  ```
+  These files contain the full Java stack trace and are the most useful artifact for diagnosing JVM crashes.
+
+**Launcher log location:**
+- The raw launcher log is written to the app's cache directory. If the log viewer is unavailable (e.g., the app crashes before the UI renders), connect your device via ADB and run:
+  ```bash
+  adb logcat -s jrelog LIBGL NativeInput
+  ```
+
+When posting a bug report, always include:
+1. The crash report from `crash-reports/` (if one was generated).
+2. The output of **Share Logs**.
+3. Your device model, Android version, and Minecraft version.
+4. The renderer and Java runtime you were using.
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Get more help
+
+If the steps above didn't resolve your issue, the PojavLauncher community is active and helpful.
+
+<CardGroup cols={2}>
+  <Card
+    title="Discord Server"
+    icon="discord"
+    href="https://discord.gg/pojavlauncher"
+  >
+    Ask for real-time help in the support channels. Include your logs and device info for the fastest response.
+  </Card>
+  <Card
+    title="GitHub Issues"
+    icon="github"
+    href="https://github.com/PojavLauncherTeam/PojavLauncher/issues"
+  >
+    Search existing issues before opening a new one. Provide a detailed bug report with logs, device specs, and reproduction steps.
+  </Card>
+</CardGroup>
+
+<Note>
+Before opening a GitHub issue, search for existing reports with the same error message. Duplicate issues are closed without comment. The more detail you provide in your report — device, Android version, Minecraft version, renderer, Java runtime, and full logs — the faster a fix can be identified.
+</Note>

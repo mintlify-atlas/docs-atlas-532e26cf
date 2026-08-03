@@ -1,0 +1,121 @@
+---
+title: "Launching and Playing Minecraft with PojavLauncher"
+sidebarTitle: "Playing"
+description: "Navigate the PojavLauncher main screen, download game files, launch a Minecraft session, and use touch gestures to play on your Android device."
+---
+
+The PojavLauncher main screen is your central hub for everything from selecting a Minecraft version to sharing crash logs. When you open the launcher for the first time it greets you with the main menu and — if you have not yet added an account — prompts you to sign in. Once an account is active and a version is selected, a single tap on **Play** downloads any missing files and starts the game.
+
+<Warning>
+  **PojavLauncher has been discontinued.** Its successor is [Amethyst Android](https://github.com/AngelAuraMC/Amethyst-Android). These docs describe the final released state of PojavLauncher.
+</Warning>
+
+## Main Screen Overview
+
+The main screen contains the following interactive elements:
+
+| Element | What it does |
+|---|---|
+| **Account spinner** (top) | Shows the active account; tap to switch or add an account |
+| **Version spinner** | Shows the active profile and version; tap to switch profiles |
+| **Edit profile button** (pencil icon next to version spinner) | Opens the profile editor for the current profile |
+| **Play button** | Downloads missing files and launches the game |
+| **Settings button** (top-right) | Opens launcher settings |
+| **News button** | Opens the PojavLauncher website |
+| **Discord button** | Opens the community Discord invite link |
+| **Custom Controls button** | Opens the touch-control layout editor |
+| **Install JAR button** | Launches the mod-loader/JAR installer |
+| **Share Logs button** | Shares the latest log file (`latestlog.txt`) via Android's share sheet |
+| **Open Directory button** | Opens the current profile's game directory in a file manager |
+
+## Selecting a Version
+
+Tap the **version spinner** on the main screen. A list of available profiles appears. Each profile displays its name and the Minecraft version it targets. Tap the profile you want to make it active. If you want to play a version that does not yet have a profile, create one first via the profile editor (see [Profiles](/guides/profiles)).
+
+<Tip>
+  Long-pressing the **News** button navigates to the gamepad mapper screen — useful if you have a Bluetooth or USB controller attached.
+</Tip>
+
+## First-Launch Download
+
+The first time you press **Play** for a given Minecraft version, the launcher downloads all required components:
+
+- **Game JAR and metadata** for the selected version
+- **Asset index and asset objects** (sounds, language files, textures)
+- **Library JARs** (LWJGL, Netty, authlib, and all other dependencies)
+- **Java runtime** if the required JDK is not yet installed on the device
+
+A progress bar at the bottom of the screen tracks each download phase. The initial download can take several minutes on a slow connection. Once everything is cached locally, subsequent launches of the same version start almost instantly.
+
+<Note>
+  Downloads for any ongoing task (including game downloads) are shown in the progress bar at the bottom of the launcher. Avoid pressing **Play** a second time while a download is running — the launcher will show a "tasks ongoing" toast and refuse to start the game until the current task completes.
+</Note>
+
+## Launching the Game
+
+<Steps>
+  <Step title="Confirm your account is set">
+    The account spinner must show a valid account. If it says "No account", tap it and add one. Microsoft accounts must have been authenticated at least once; local accounts are available immediately after creation.
+  </Step>
+  <Step title="Select a profile with a known version">
+    Tap the version spinner and choose a profile. The `lastVersionId` field must be a real version string (e.g., `1.20.4`) or one of the dynamic values `latest-release` / `latest-snapshot`. If the field reads "Unknown", the version list has not loaded yet — wait a moment and retry.
+  </Step>
+  <Step title="Tap Play">
+    The launcher resolves any missing downloads, then starts the Java process. The screen transitions to the game view. The active touch-control layout appears as an overlay once the game has rendered its first frame.
+  </Step>
+</Steps>
+
+## Touch Gestures In-Game
+
+PojavLauncher maps common touch interactions to standard Minecraft mouse and keyboard actions. The default behaviour (when gestures are **not** disabled in settings) is:
+
+| Gesture | Action |
+|---|---|
+| Single tap | Left mouse click |
+| Long press | Right mouse click (triggers after the delay configured in Settings → Input; default **300 ms**, adjustable from 100 ms to 1000 ms) |
+| Double tap on the hotbar area | Swap held item to off-hand (sends the `F` key); can be disabled via **Settings → Input → Disable double-tap swap** |
+| Two-finger pinch / spread | Scroll (zoom or inventory scroll depending on context) |
+| Drag with one finger | Move the camera / look around |
+
+<Note>
+  All gestures can be globally disabled by enabling **Disable gestures** in launcher settings. This is useful if you rely entirely on a custom on-screen control layout or a physical gamepad.
+</Note>
+
+## Exiting the Game
+
+To return to the launcher from inside a running game session, use one of these methods:
+
+- Open the **in-game Minecraft menu** (press `Esc` via the virtual keyboard or a mapped button) and choose **Quit to Title**, then close the game fully.
+- Tap the **Menu** special button (if present in your control layout) to bring up the in-launcher overlay menu.
+- Press the Android **Back** button — this sends a back-navigation event to the game which typically opens the pause menu.
+
+<Warning>
+  Force-stopping the game without saving (for example, via the Android task switcher) may corrupt your world files. Always quit from within the game menu when possible.
+</Warning>
+
+## Sharing Crash Logs
+
+When the game crashes or behaves unexpectedly, the launcher writes a detailed log to:
+
+```
+<game_home>/latestlog.txt
+```
+
+To share it, return to the main screen and tap **Share Logs**. Android's standard share sheet opens, letting you send the file via email, messaging apps, or upload it directly to a paste service. When reporting a bug on the PojavLauncher GitHub or Discord, always attach the full `latestlog.txt`.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Accounts" icon="user" href="/guides/accounts">
+    Add or switch Microsoft and local accounts.
+  </Card>
+  <Card title="Profiles" icon="sliders" href="/guides/profiles">
+    Customise Java arguments, renderer, and game directory per version.
+  </Card>
+  <Card title="Controls" icon="gamepad" href="/guides/controls">
+    Edit and import custom on-screen touch-control layouts.
+  </Card>
+  <Card title="Forge" icon="hammer" href="/guides/forge">
+    Install Forge and load mods on top of vanilla Minecraft.
+  </Card>
+</CardGroup>

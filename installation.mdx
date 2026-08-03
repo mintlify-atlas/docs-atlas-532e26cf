@@ -1,0 +1,115 @@
+---
+title: "Installing PojavLauncher on Android Devices"
+sidebarTitle: "Installation"
+description: "Three ways to install PojavLauncher on Android: stable GitHub release APK, automatic CI builds, or Google Play — plus first-launch setup and permission steps."
+---
+
+Getting PojavLauncher onto your Android device takes only a few minutes. There are three official distribution channels to choose from — a stable release APK you sideload, bleeding-edge automatic CI builds, or a convenient Google Play install. Pick whichever suits your needs and follow the steps below to get into the game.
+
+<Warning>
+  **PojavLauncher has been discontinued.** The project is no longer actively maintained. Its successor is [Amethyst Android](https://github.com/AngelAuraMC/Amethyst-Android). These installation steps apply to the final archived release.
+</Warning>
+
+## Requirements
+
+- **Android 5.0 (API 21)** or later (`minSdkVersion 21`). **Android 8.0 or later is strongly recommended** for the best compatibility and performance.
+- At least **2 GB of free storage** (the game files themselves require additional space on top of the APK).
+- A valid **Microsoft / Mojang account** to log in and download Minecraft.
+- For sideloading: **"Install from unknown sources"** must be enabled for your browser or file manager in Android Settings.
+
+## Installation Methods
+
+<Tabs>
+  <Tab title="Stable Release APK">
+    Stable releases are manually tagged by the team and represent the most tested version of the launcher.
+
+    <Steps>
+      <Step title="Open the Releases page">
+        Navigate to the [PojavLauncher Releases](https://github.com/PojavLauncherTeam/PojavLauncher/releases) page on GitHub.
+      </Step>
+      <Step title="Download the APK">
+        Find the latest release and download the `.apk` file that matches your device architecture (most modern Android phones are **arm64-v8a**). If you are unsure, download the universal APK.
+      </Step>
+      <Step title="Allow installation from unknown sources">
+        On Android 8+, your browser will prompt you to allow installing unknown apps. Tap **Settings**, enable the toggle for your browser, then navigate back and tap **Install**.
+      </Step>
+      <Step title="Install the APK">
+        Open the downloaded file from your notification shade or a file manager and tap **Install**.
+      </Step>
+    </Steps>
+  </Tab>
+
+  <Tab title="Automatic CI Builds">
+    GitHub Actions produces a new build on every commit to the main branch. These builds are less tested than stable releases but contain the latest fixes and features.
+
+    <Steps>
+      <Step title="Open the Actions page">
+        Go to [PojavLauncher Actions](https://github.com/PojavLauncherTeam/PojavLauncher/actions) on GitHub.
+      </Step>
+      <Step title="Sign in to GitHub">
+        Artifact downloads require a free GitHub account. Sign in if you have not already.
+      </Step>
+      <Step title="Select the latest successful run">
+        Click the most recent green ✅ **Android CI** workflow run.
+      </Step>
+      <Step title="Download the APK artifact">
+        Scroll to the **Artifacts** section at the bottom of the run page and download the APK zip. Extract it, then install the APK inside.
+      </Step>
+    </Steps>
+
+    <Note>
+      CI build artifacts expire after 90 days. If you need a build older than that, use a stable release instead.
+    </Note>
+  </Tab>
+
+  <Tab title="Google Play">
+    The easiest installation path — no sideloading required.
+
+    <Steps>
+      <Step title="Open Google Play">
+        On your Android device, open the **Google Play Store** app.
+      </Step>
+      <Step title="Search for PojavLauncher">
+        Search for **PojavLauncher** or browse directly to the app page. The package ID is `net.kdt.pojavlaunch`.
+      </Step>
+      <Step title="Tap Install">
+        Tap **Install** and wait for the download to complete. Android handles permissions automatically.
+      </Step>
+    </Steps>
+
+    <Note>
+      The Google Play version may lag slightly behind the latest GitHub release due to store review times.
+    </Note>
+  </Tab>
+</Tabs>
+
+## First-Launch Setup
+
+Once PojavLauncher is installed, open it and complete the following one-time setup steps.
+
+<Steps>
+  <Step title="Grant storage permission">
+    On first launch, PojavLauncher will ask for storage access. Tap **Allow** so the launcher can create your `.minecraft` folder and save game files. Without this permission the launcher cannot download or run the game.
+
+    <Note>
+      On Android 11 and above, you may be directed to **Settings → Apps → PojavLauncher → Permissions** to grant "All files access" (MANAGE_EXTERNAL_STORAGE). This is required for the launcher to work correctly.
+    </Note>
+  </Step>
+  <Step title="Sign in to your Microsoft account">
+    Tap the account icon and follow the on-screen Microsoft login flow. PojavLauncher uses the official Microsoft OAuth flow — your credentials are never stored by the launcher itself.
+  </Step>
+  <Step title="Choose a Minecraft version">
+    On the main screen, tap the **version selector** drop-down. You can pick any release, snapshot, or beta version. If you are unsure, choose the latest full release.
+  </Step>
+  <Step title="Tap Play">
+    Tap the **Play** button. PojavLauncher will download the selected version's assets and libraries on first run. This may take a few minutes depending on your connection speed.
+  </Step>
+</Steps>
+
+<Tip>
+  If the game crashes on first launch, try switching to a different JRE version in **Settings → Java Runtime**. Minecraft 1.17 and above require Java 17 or later; older versions work best with Java 8.
+</Tip>
+
+## iOS / iPadOS
+
+PojavLauncher for iOS and iPadOS is a completely separate project with its own installation process. Visit the [PojavLauncher_iOS](https://github.com/PojavLauncherTeam/PojavLauncher_iOS) repository for instructions.

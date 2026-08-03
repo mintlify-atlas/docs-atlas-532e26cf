@@ -1,0 +1,126 @@
+---
+title: "Installing and Using Forge on PojavLauncher"
+sidebarTitle: "Forge"
+description: "Learn how to install Minecraft Forge on Android with PojavLauncher's built-in headless installer, manage Java versions, and add mods to your world."
+---
+
+Forge is the oldest and most widely-used Minecraft mod loader, providing a rich ecosystem of content mods, tech mods, and large modpacks. PojavLauncher includes a fully integrated Forge installer that downloads the official Forge installer JAR from [maven.minecraftforge.net](https://maven.minecraftforge.net) and runs it headlessly — no desktop computer required. Once the process finishes, a ready-to-launch Forge profile appears in your profile list automatically.
+
+<Warning>
+  **PojavLauncher has been discontinued.** Its successor is [Amethyst Android](https://github.com/AngelAuraMC/Amethyst-Android). These docs describe the final released state of PojavLauncher.
+</Warning>
+
+## Supported Forge Versions
+
+PojavLauncher can install Forge for any Minecraft version that has an official Forge release, from the early 1.1 builds through 1.20.x. Java runtime requirements change across that range:
+
+| Minecraft Version Range | Required Java |
+|---|---|
+| 1.0 – 1.16.x | Java 8 |
+| 1.17 – 1.20.4 | Java 17 |
+| 1.20.5 and above | Java 21 |
+
+PojavLauncher's Multi-Runtime feature selects the correct JDK automatically based on the version you install. You do not need to switch runtimes by hand.
+
+## Installing Forge
+
+<Steps>
+  <Step title="Open the mod-loader installer">
+    From the PojavLauncher main menu, tap the **Install JAR** button (the toolbar icon that looks like a puzzle piece or installer). A list of supported mod loaders appears.
+  </Step>
+  <Step title="Select Forge">
+    Tap **Forge** in the mod-loader list. The launcher fetches the full Forge version catalog from `https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml` and displays it grouped by Minecraft version.
+  </Step>
+  <Step title="Choose a Minecraft version, then a Forge version">
+    Expand the Minecraft version you want to play. Each row shows the full Forge build string in the form `<mcVersion>-<forgeVersion>` (for example, `1.20.1-47.3.0`). Tap the build you want. The "Recommended" build for each Minecraft version is a safe starting point.
+  </Step>
+  <Step title="Wait for the download">
+    The launcher downloads the Forge installer JAR to its cache directory. A progress bar tracks the transfer. On slow connections this may take a minute.
+  </Step>
+  <Step title="Headless installation runs automatically">
+    After the download, PojavLauncher launches a Java process with the Forge installer JAR and a custom `-javaagent` that drives the installer non-interactively:
+
+    ```
+    -javaagent:<data_dir>/forge_installer/forge_installer.jar=NPS
+    -jar <cache_dir>/forge-installer.jar
+    ```
+
+    The `NPS` flag (No Profile Suppression) tells the agent to create a launcher profile when installation completes. You will see the Minecraft installation screen while Forge libraries are being downloaded — this is normal.
+  </Step>
+  <Step title="Launch your Forge profile">
+    When the installer exits, return to the PojavLauncher main menu. A new profile named after the Forge version appears in the profile selector. Select it and tap **Play**.
+  </Step>
+</Steps>
+
+<Note>
+  If the version list fails to load, check your internet connection and tap **Retry**. The launcher caches the version list locally so subsequent opens are faster, but the first fetch requires a live connection.
+</Note>
+
+## Installing Mods
+
+Mods are plain `.jar` files placed in the `mods` folder inside your Minecraft game directory.
+
+<Steps>
+  <Step title="Locate your game directory">
+    The default Minecraft home is `<storage>/games/PojavLauncher/.minecraft/`. If you use a custom profile with a separate game directory, the path will differ — check the profile settings.
+  </Step>
+  <Step title="Copy mod JARs into the mods folder">
+    Create a `mods` subfolder if it does not exist, then copy your downloaded `.jar` files into it:
+
+    ```
+    <game_home>/.minecraft/mods/your-mod-1.0.0.jar
+    ```
+
+    You can use a file manager app or connect your device to a computer via USB.
+  </Step>
+  <Step title="Select the matching Forge profile and play">
+    Make sure the active profile in PojavLauncher uses the same Minecraft + Forge version your mods target, then tap **Play**.
+  </Step>
+</Steps>
+
+<Tip>
+  Keep mods organized in separate custom profiles (one per mod set) so you can swap between them without manually moving files.
+</Tip>
+
+## Java Version Requirements
+
+PojavLauncher ships with OpenJDK 8, 17, and 21 and selects the correct one when it creates the Forge profile. If you manually edit a profile's Java setting, make sure it matches the table above — running Forge 1.17+ under Java 8 will result in a crash at launch.
+
+<Note>
+  Multi-Runtime Java switching is handled entirely by the launcher. See the [Multi-Runtime guide](/advanced/multi-runtime) for details on overriding the automatic selection.
+</Note>
+
+## Known Limitations
+
+<Accordion title="Not all Forge mods work on Android">
+  Some mods call platform-specific APIs or native libraries that do not exist on Android. Common examples include mods that use Netty transports assuming a desktop OS, mods that shell out to system executables, or mods that depend on PC GPU features not exposed through GL4ES. If a mod crashes immediately on launch, check whether the mod author lists Android support.
+</Accordion>
+
+<Accordion title="Mod renderers that target OpenGL 4.x may fail">
+  PojavLauncher uses GL4ES to bridge OpenGL calls to OpenGL ES. Mods or shader packs that require OpenGL 4.x features unsupported by your device's GPU will either render incorrectly or crash. OptiFine shaders are a common source of this problem — see the [OptiFine guide](/guides/optifine) for more detail.
+</Accordion>
+
+<Accordion title="Forge installer needs base Minecraft to be downloaded first">
+  The headless installer downloads Forge libraries and applies them on top of a vanilla Minecraft installation. If vanilla assets for the target version have not been downloaded yet, the installer fetches them during this step. Ensure you have a stable internet connection for the entire installation.
+</Accordion>
+
+<Accordion title="NeoForge is not supported by the built-in installer">
+  PojavLauncher's integrated installer only handles official Forge builds from `maven.minecraftforge.net`. NeoForge (the community fork starting with 1.20.2) is not listed. You may be able to sideload a NeoForge installer JAR manually using the **Install JAR** flow, but this is untested.
+</Accordion>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Fabric & Quilt" icon="feather" href="/guides/fabric-quilt">
+    Prefer a lightweight mod loader? Install Fabric or Quilt in seconds.
+  </Card>
+  <Card title="Modpacks" icon="box-archive" href="/guides/modpacks">
+    Browse and install full modpacks from Modrinth or CurseForge.
+  </Card>
+  <Card title="OptiFine" icon="eye" href="/guides/optifine">
+    Add shader and graphics optimization support on top of Forge.
+  </Card>
+  <Card title="Multi-Runtime" icon="java" href="/advanced/multi-runtime">
+    Understand how PojavLauncher manages Java 8, 17, and 21.
+  </Card>
+</CardGroup>

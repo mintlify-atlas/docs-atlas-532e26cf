@@ -1,0 +1,108 @@
+---
+title: "Video & Rendering Settings in PojavLauncher Android"
+sidebarTitle: "Video Settings"
+description: "Configure the rendering backend, resolution scale, VSync behavior, and display options to balance performance and visual quality on Android."
+---
+
+PojavLauncher exposes a dedicated **Video** settings screen that controls how Minecraft is rendered on your Android device. Choosing the right renderer and tuning the resolution scale can have a large impact on frame rate and battery life — especially on mid-range hardware. Read through each option below so you understand the trade-offs before changing anything.
+
+<Note>
+  The **Ignore Notch** toggle is only shown when a physical display notch is detected and your Android version is 9 (Pie) or higher. It will not appear on notchless devices.
+</Note>
+
+## Renderer
+
+<ParamField path="renderer" type="string" default="opengles2">
+  Selects the graphics back-end used to translate Minecraft's OpenGL calls for your Android GPU.
+
+  | Value | Description |
+  |---|---|
+  | `opengles2` | OpenGL ES 2.0 via ANGLE. Broadest device compatibility. Recommended default. |
+  | `opengles3` | OpenGL ES 3.0 via ANGLE. Better visual fidelity; requires a GLES 3 capable GPU. |
+  | `vulkan_zink` | Gallium Zink — OpenGL over Vulkan. Highest potential performance on supported devices. |
+  | `opengles3_virgl` | VirGL renderer for OpenGL ES 3.0. Experimental; primarily used in virtualised environments. |
+
+  See [Renderers](/advanced/renderers) for a detailed comparison of each back-end, including known compatibility issues.
+</ParamField>
+
+## Display
+
+<Accordion title="Ignore Display Notch">
+  <ParamField path="ignoreNotch" type="boolean" default="false">
+    When enabled, the game viewport expands into the notch/cutout area of the display, using every available pixel. Disable this if UI elements or hotbar items are obscured by the notch.
+
+    This preference is only rendered on Android 9+ devices where a cutout is physically present.
+  </ParamField>
+</Accordion>
+
+<Accordion title="Resolution Scale">
+  <ParamField path="resolutionRatio" type="integer (percentage)" default="auto">
+    Scales the internal render resolution relative to the device's native display resolution. The value is expressed as a percentage and displayed with a `%` suffix in the UI.
+
+    **Auto behaviour:** on first launch, `findBestResolution()` targets a short-side of 1080 px on powerful devices and 720 px on weaker ones. If the device's native resolution already falls within that target, no scaling is applied (100 %).
+
+    Lowering this value (e.g. to 75 % or 50 %) is one of the most effective ways to improve frame rate. Raising it above 100 % super-samples the image, which improves clarity at the cost of significant GPU load.
+
+    ```
+    Example: device is 2400×1080 → auto targets 1080p → scale = 100 %
+    Example: device is 3200×1440 → auto targets 1080p → scale ≈ 75 %
+    ```
+  </ParamField>
+</Accordion>
+
+## Performance
+
+<Accordion title="Sustained Performance Mode">
+  <ParamField path="sustainedPerformance" type="boolean" default="auto">
+    Activates Android's [sustained performance mode](https://developer.android.com/topic/performance/sustained) (`Window.setSustainedPerformanceMode`), which asks the OS to keep CPU/GPU clocks at a stable, thermally sustainable level rather than boosting them. This prevents the device from throttling during long play sessions at the cost of a slightly lower peak clock.
+
+    **Auto behaviour:** enabled by default on devices classified as "powerful" (Android 10+, > 4 GB RAM, ≥ 1080 p display, > 4 CPU cores, heterogeneous core layout).
+
+    <Note>
+      This option is only available on Android 7.0 (Nougat) and higher. The toggle is hidden on older Android versions.
+    </Note>
+  </ParamField>
+</Accordion>
+
+## Surface & VSync
+
+<Accordion title="Use SurfaceView (Alternate Surface)">
+  <ParamField path="alternate_surface" type="boolean" default="auto">
+    Switches the game surface from `TextureView` (default on low-end devices) to `SurfaceView`. `SurfaceView` renders in a dedicated hardware overlay, which typically reduces latency and CPU overhead.
+
+    **Auto behaviour:** enabled by default on powerful devices.
+
+    <Warning>
+      The **Force VSync** option below is only visible when **Use SurfaceView** is turned on. If you switch back to `TextureView`, VSync is automatically hidden and has no effect.
+    </Warning>
+  </ParamField>
+</Accordion>
+
+<Accordion title="Force VSync">
+  <ParamField path="force_vsync" type="boolean" default="auto">
+    Forces the renderer to synchronise frame presentation with the display's refresh rate when using `SurfaceView`. This eliminates screen tearing at the cost of capping the frame rate to the display refresh (typically 60 Hz or 90 Hz).
+
+    **Auto behaviour:** enabled by default on powerful devices.
+
+    Only visible when **Use SurfaceView** (`alternate_surface`) is enabled.
+  </ParamField>
+</Accordion>
+
+<Accordion title="VSync in Zink (Vulkan)">
+  <ParamField path="vsync_in_zink" type="boolean" default="true">
+    Controls whether VSync is enabled specifically when using the `vulkan_zink` renderer. The Zink/Vulkan path handles its own swap-chain presentation, so this toggle operates independently from the `force_vsync` option above.
+
+    Disabling this can increase raw frame rate on Vulkan-capable devices but may introduce tearing artefacts.
+  </ParamField>
+</Accordion>
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Renderer Details" icon="gpu" href="/advanced/renderers">
+    Deep-dive into each rendering back-end: hardware requirements, known bugs, and when to switch.
+  </Card>
+  <Card title="Experimental Settings" icon="flask" href="/configuration/experimental-settings">
+    Advanced options including shader dumping and system Vulkan driver selection.
+  </Card>
+</CardGroup>

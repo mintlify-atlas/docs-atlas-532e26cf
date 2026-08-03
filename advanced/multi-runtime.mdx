@@ -1,0 +1,107 @@
+---
+title: "Multi-Runtime (Multi-JRE) Support in PojavLauncher"
+sidebarTitle: "Multi-Runtime"
+description: "Install and switch between multiple Java runtimes on Android. Learn how PojavLauncher detects, unpacks, and selects the right JRE for every Minecraft version."
+---
+
+PojavLauncher supports installing and switching between multiple Java runtimes side-by-side — a feature known as **Multi-Runtime** or **Multi-JRE**. Different versions of Minecraft require different versions of Java: older releases run best on Java 8, versions 1.17 through 1.20.4 require Java 17, and 1.20.5 or newer demands Java 21. Multi-Runtime lets you keep all of these runtimes installed at once and have PojavLauncher automatically pick the right one for each profile, without you having to reinstall anything.
+
+## Why Java version matters
+
+| Minecraft version range | Required Java |
+|-------------------------|---------------|
+| 1.0 – 1.16.5            | Java 8        |
+| 1.17 – 1.20.4           | Java 17       |
+| 1.20.5+                 | Java 21       |
+
+<Warning>
+Launching Minecraft with the wrong Java version will cause an immediate crash or a confusing "Unsupported class file major version" error. Always match your runtime to the Minecraft version you are playing.
+</Warning>
+
+## Runtime storage layout
+
+Each installed runtime lives in its own subdirectory under the app's internal data folder:
+
+```
+<internal_data>/runtimes/<runtime-name>/
+```
+
+Where `<internal_data>` resolves to the app's private `files` parent directory (obtained at runtime via `Context.getFilesDir().getParent()`). The constant `MULTIRT_HOME` in `Tools.java` is set to `DIR_DATA + "/runtimes"` during early initialization.
+
+Inside each runtime directory, PojavLauncher reads a standard `release` file to identify the runtime's properties. Two keys are extracted from that file:
+
+- **`JAVA_VERSION`** — the full version string (e.g. `"17.0.9"`). PojavLauncher splits this on `.` and parses the major version: if the first segment is `"1"` (Java 8 legacy scheme), the second segment is used; otherwise the first segment is used directly.
+- **`OS_ARCH`** — the CPU architecture string (e.g. `"aarch64"`, `"x86_64"`).
+
+## Runtime model
+
+Every installed runtime is represented by a `Runtime` object with the following fields:
+
+| Field           | Type     | Description                                              |
+|-----------------|----------|----------------------------------------------------------|
+| `name`          | `String` | Directory name under `runtimes/`, used as the identifier |
+| `versionString` | `String` | Raw `JAVA_VERSION` value from the `release` file         |
+| `arch`          | `String` | Raw `OS_ARCH` value from the `release` file              |
+| `javaVersion`   | `int`    | Parsed Java major version (8, 17, 21, …)                 |
+
+If the `release` file is missing or cannot be parsed, `versionString` and `arch` are `null` and `javaVersion` is `0` — the runtime is considered broken.
+
+## Installing a runtime
+
+<Steps>
+  <Step title="Open the Runtime Manager">
+    From the main launcher screen, go to **Settings → Java**. Tap **Install JRE** to open the Multi-Runtime configuration dialog.
+  </Step>
+  <Step title="Select or import a TAR.XZ archive">
+    Choose a runtime `.tar.xz` file from your device storage, or download a pre-built PojavLauncher-compatible runtime first (see below). The file picker accepts any `.tar.xz` archive that contains a valid JRE tree with a `release` file at its root.
+  </Step>
+  <Step title="Wait for unpacking">
+    PojavLauncher calls `uncompressTarXZ`, which wraps the stream in an `XZCompressorInputStream` and then a `TarArchiveInputStream`, extracting every entry to the runtime's destination folder. Progress is reported through the `UNPACK_RUNTIME` progress channel. Symbolic links are restored via `android.system.Os.symlink`.
+  </Step>
+  <Step title="unpack200 post-processing (Java 8 only)">
+    After extraction, `unpack200` is run on every `.pack` file found inside the runtime tree. This step is needed only for Java 8, because Java 9+ (Project Jigsaw) no longer ships `pack200`-compressed JARs. The binary executed is `libunpack200.so` located in the app's native library directory.
+  </Step>
+  <Step title="Post-prepare fixes">
+    `postPrepare` renames `libfreetype.so.6` → `libfreetype.so` if needed, then copies a stub `libawt_xawt.so` from the native library directory into the runtime's lib folder so AWT display stubs work correctly.
+  </Step>
+  <Step title="Verify the runtime">
+    The dialog refreshes. Your new runtime should appear in the list with its Java version and architecture. If it shows as broken, the `release` file was not found — double-check that your archive has a standard JDK/JRE layout.
+  </Step>
+</Steps>
+
+## Pre-built runtimes
+
+The PojavLauncher team publishes Android-compatible OpenJDK builds through the **android-openjdk-build-multiarch** CI pipeline.
+
+<Tip>
+Download the `jre8-pojav` (or `jre17-pojav` / `jre21-pojav`) artifact from the GitHub Actions runs at:
+[https://github.com/PojavLauncherTeam/android-openjdk-build-multiarch/actions](https://github.com/PojavLauncherTeam/android-openjdk-build-multiarch/actions)
+
+Pick the artifact that matches your device's ABI (`aarch64` for 64-bit ARM, `arm` for 32-bit ARM, `x86_64` for x86_64 emulators).
+</Tip>
+
+## MultiRTUtils API reference
+
+The following public methods in `MultiRTUtils` are used by PojavLauncher internally and are relevant if you are building tooling around the launcher:
+
+| Method | Description |
+|--------|-------------|
+| `getRuntimes()` | Returns a `List<Runtime>` of every installed runtime. Reads the `runtimes/` directory; throws `RuntimeException` if the directory cannot be created. Results are cached in a `HashMap`. |
+| `getExactJreName(int majorVersion)` | Returns the `name` of the first installed runtime whose `javaVersion` exactly equals `majorVersion`, or `null` if none found. |
+| `getNearestJreName(int majorVersion)` | Returns the `name` of the runtime with a `javaVersion` closest to (but not less than) `majorVersion`, using `MathUtils.findNearestPositive`. Returns `null` if no runtimes are installed. |
+| `installRuntimeNamed(nativeLibDir, inputStream, name)` | Installs a runtime from an `InputStream` of a `.tar.xz` archive into `runtimes/<name>`. Deletes any existing directory with the same name first. |
+| `removeRuntimeNamed(String name)` | Deletes `runtimes/<name>` and evicts it from the cache. |
+| `getRuntimeHome(String name)` | Returns the `File` pointing to the runtime's folder. Throws `RuntimeException` if the folder doesn't exist or the runtime is broken. |
+| `readInternalRuntimeVersion(String name)` | Reads `runtimes/<name>/pojav_version` and returns its contents, or `null` if the file doesn't exist. Used for the binpack versioning scheme. |
+
+## Selecting the default runtime
+
+Go to **Settings → Java** and tap the runtime you want to use as the global default. The chosen name is persisted as the `defaultRuntime` shared preference key (`LauncherPreferences.PREF_DEFAULT_RUNTIME`).
+
+## Per-profile runtime override
+
+Each launcher profile can override the global default. Open the **Profile Editor** for any profile and set the `javaVersion` field to the desired major version. PojavLauncher calls `getExactJreName` first; if no exact match is found it falls back to `getNearestJreName`, ensuring you always get the closest available runtime rather than a hard failure.
+
+<Note>
+The runtime name stored in a profile is prefixed with `pojav://` (the constant `LAUNCHERPROFILES_RTPREFIX`) to distinguish it from vanilla Minecraft's own Java path entries.
+</Note>

@@ -1,0 +1,324 @@
+---
+title: "Custom Controls JSON Format for PojavLauncher"
+sidebarTitle: "Controls Format"
+description: "Full reference for PojavLauncher's touch control layout JSON files — button fields, special keycodes, dynamic position expressions, drawers, and joysticks."
+---
+
+PojavLauncher's touch control layouts are stored as JSON files and can be created, edited, or shared freely. Understanding the format lets you hand-craft pixel-perfect control schemes, write external editors, or version-control your layouts alongside your modpacks. Every field documented here is read directly from the source classes `CustomControls`, `ControlData`, `ControlDrawerData`, and `ControlJoystickData`.
+
+## File location
+
+Control layout files live under the game home directory:
+
+```
+<game_home>/controlmap/<layout-name>.json
+```
+
+The **default layout** loaded on first launch is:
+
+```
+<game_home>/controlmap/default.json
+```
+
+You can set a different default in **Settings → Controls → Default Control Layout**. The preference key is `defaultCtrl`, which maps to `LauncherPreferences.PREF_DEFAULTCTRL_PATH`.
+
+## Top-level structure
+
+```json
+{
+  "version": 8,
+  "scaledAt": 100.0,
+  "mControlDataList": [ ... ],
+  "mDrawerDataList":  [ ... ],
+  "mJoystickDataList": [ ... ]
+}
+```
+
+| Field               | Type    | Description |
+|---------------------|---------|-------------|
+| `version`           | `int`   | Layout format version. Current version is **8**. PojavLauncher auto-migrates older layouts (versions 1–7) on load and re-saves them at version 8. |
+| `scaledAt`          | `float` | The `buttonscale` preference value (as a percentage, default `100.0`) that was active when the layout was saved. Used to correctly interpret stored sizes when the scale changes. |
+| `mControlDataList`  | array   | Array of regular `ControlData` button objects. |
+| `mDrawerDataList`   | array   | Array of `ControlDrawerData` slide-out drawer objects. |
+| `mJoystickDataList` | array   | Array of `ControlJoystickData` virtual joystick objects. |
+
+<Note>
+All three arrays must be present, even if empty. Omitting any array will cause a deserialization failure.
+</Note>
+
+## ControlData object
+
+Each entry in `mControlDataList` represents a single on-screen button.
+
+```json
+{
+  "name": "Jump",
+  "keycodes": [32, -1, -1, -1],
+  "dynamicX": "${right} - ${margin} * 2 - ${width}",
+  "dynamicY": "${bottom} - ${margin} * 2 - ${height}",
+  "isToggle": false,
+  "passThruEnabled": false,
+  "opacity": 1.0,
+  "bgColor": 1291845632,
+  "strokeColor": -1,
+  "strokeWidth": 0.0,
+  "cornerRadius": 0.0,
+  "isSwipeable": false,
+  "displayInGame": true,
+  "displayInMenu": true,
+  "width": 50.0,
+  "height": 50.0
+}
+```
+
+### Button fields
+
+| Field             | Type      | Description |
+|-------------------|-----------|-------------|
+| `name`            | `String`  | Label displayed on the button face. |
+| `keycodes`        | `int[4]`  | Array of exactly 4 GLFW keycode integers. Unused slots are filled with `GLFW_KEY_UNKNOWN` (`-1` in GLFW, but see the special values table below for PojavLauncher's own negatives). All 4 slots are always serialized. |
+| `dynamicX`        | `String`  | Expression that computes the button's **left edge** in pixels. See [Dynamic position expressions](#dynamic-position-expressions). |
+| `dynamicY`        | `String`  | Expression that computes the button's **top edge** in pixels. |
+| `isToggle`        | `boolean` | When `true`, one tap activates the key and keeps it held; a second tap releases it. Useful for Shift (sneak). |
+| `passThruEnabled` | `boolean` | When `true`, touch events pass through this button to the game view beneath it. |
+| `opacity`         | `float`   | Button transparency from `0.0` (invisible) to `1.0` (fully opaque). |
+| `bgColor`         | `int`     | ARGB packed integer for the button background fill. Default is `0x4D000000` (30% black). |
+| `strokeColor`     | `int`     | ARGB packed integer for the border stroke. Default is `0xFFFFFFFF` (white). |
+| `strokeWidth`     | `float`   | Border stroke width in **dp**. `0` means no border. |
+| `cornerRadius`    | `float`   | Corner rounding percentage (0–100). `0` = square corners, `50` = circular. |
+| `isSwipeable`     | `boolean` | Allows swiping from this button to trigger adjacent keys (useful for number rows). |
+| `displayInGame`   | `boolean` | Show this button while the game HUD is active. |
+| `displayInMenu`   | `boolean` | Show this button while in-game menus (inventory, etc.) are open. |
+| `width`           | `float`   | Button width in **dp**. |
+| `height`          | `float`   | Button height in **dp**. |
+
+<Note>
+`isHideable` is a **transient** field computed at runtime from the button's keycodes — it is not stored in the JSON. A button becomes hideable when the layout contains a `TOGGLECTRL` (`-2`) button.
+</Note>
+
+## Special keycode values
+
+When a keycode slot contains a negative integer, it triggers a PojavLauncher action rather than a keyboard key. You can combine one special keycode with up to three standard GLFW keycodes in the same button.
+
+| Value | Constant name        | Action |
+|-------|----------------------|--------|
+| `-1`  | `SPECIALBTN_KEYBOARD`    | Open the virtual keyboard (soft IME input). |
+| `-2`  | `SPECIALBTN_TOGGLECTRL`  | Toggle the visibility of all hideable controls. |
+| `-3`  | `SPECIALBTN_MOUSEPRI`    | Simulate a left (primary) mouse button click. |
+| `-4`  | `SPECIALBTN_MOUSESEC`    | Simulate a right (secondary) mouse button click. |
+| `-5`  | `SPECIALBTN_VIRTUALMOUSE`| Toggle the virtual mouse cursor on/off. |
+| `-6`  | `SPECIALBTN_MOUSEMID`    | Simulate a middle mouse button click. |
+| `-7`  | `SPECIALBTN_SCROLLUP`    | Simulate scroll wheel up. |
+| `-8`  | `SPECIALBTN_SCROLLDOWN`  | Simulate scroll wheel down. |
+| `-9`  | `SPECIALBTN_MENU`        | Open the PojavLauncher in-game menu. |
+
+<Warning>
+Do not confuse PojavLauncher's special negative values with GLFW's `GLFW_KEY_UNKNOWN` (`0`). GLFW key unknown is `0` in LWJGL's mapping; the special PojavLauncher values start at `-1` and go downward.
+</Warning>
+
+## Dynamic position expressions
+
+`dynamicX` and `dynamicY` are mathematical expression strings evaluated at layout-inflate time using the **exp4j** library. Variable references use `${variableName}` syntax, which is substituted before evaluation.
+
+### Available variables
+
+| Variable          | Resolved value |
+|-------------------|----------------|
+| `${width}`        | Button width in pixels (after dp→px conversion). |
+| `${height}`       | Button height in pixels. |
+| `${right}`        | Screen width in pixels minus the button width — the rightmost valid X for this button. |
+| `${bottom}`       | Screen height in pixels minus the button height — the bottommost valid Y for this button. |
+| `${screen_width}` | Physical screen width in pixels. |
+| `${screen_height}`| Physical screen height in pixels. |
+| `${margin}`       | Recommended edge margin in pixels, derived from `ControlInterface.getMarginDistance()`. |
+| `${top}`          | Always `0`. |
+| `${left}`         | Always `0`. |
+| `${preferred_scale}` | Current `PREF_BUTTONSIZE` value (button scale percentage). |
+
+### Helper functions
+
+| Function  | Description |
+|-----------|-------------|
+| `dp(x)`   | Converts `x` pixels to dp. |
+| `px(x)`   | Converts `x` dp to pixels. |
+
+### Expression examples
+
+```
+# Fixed margin from top-left
+${margin}
+
+# Right-aligned with margin
+${right} - ${margin}
+
+# Bottom-centered WASD cluster
+${margin} * 2 + ${width}   →  dynamicX for the W/S column
+${bottom} - ${margin} * 2 - ${height}  →  dynamicY for left/right row
+```
+
+## ControlDrawerData object
+
+A drawer is a button that, when tapped or held, slides out a row of sub-buttons in a given direction. It is stored in `mDrawerDataList`.
+
+```json
+{
+  "properties": { /* ControlData for the drawer trigger button */ },
+  "buttonProperties": [
+    { /* ControlData for sub-button 1 */ },
+    { /* ControlData for sub-button 2 */ }
+  ],
+  "orientation": "LEFT"
+}
+```
+
+| Field              | Type            | Description |
+|--------------------|-----------------|-------------|
+| `properties`       | `ControlData`   | The visible trigger button. Its `dynamicX`/`dynamicY` positions the collapsed drawer. |
+| `buttonProperties` | `ControlData[]` | List of sub-buttons revealed when the drawer expands. |
+| `orientation`      | `String` (enum) | Direction sub-buttons expand: `"DOWN"`, `"LEFT"`, `"UP"`, `"RIGHT"`, or `"FREE"`. |
+
+## ControlJoystickData object
+
+Joystick entries extend `ControlData` and are stored in `mJoystickDataList`. All `ControlData` fields apply, plus:
+
+| Field         | Type      | Description |
+|---------------|-----------|-------------|
+| `forwardLock` | `boolean` | When `true`, the joystick stays in the forward position after the finger lifts, useful for continuous walking. |
+| `absolute`    | `boolean` | When `true`, the joystick jumps to the exact touch point (absolute tracking). When `false`, the center follows relative movement from where you first touched. |
+
+## Layout version history
+
+| Version | Notes |
+|---------|-------|
+| 1       | Legacy format — no `version` key. Migrated to v3 on load. |
+| 2       | Added `version` key. Fixed-pixel positions. Migrated to v3 on load. |
+| 3–5     | Dynamic positions introduced; stroke width as percentage of button size. |
+| 6–7     | Stroke width converted to dp. |
+| **8**   | Current format. Joystick height bug fixed. All new layouts are saved as v8. |
+
+## Complete example layout
+
+The snippet below is a minimal but fully valid layout containing a keyboard button, a virtual mouse toggle, and a WASD movement cluster.
+
+```json
+{
+  "version": 8,
+  "scaledAt": 100.0,
+  "mControlDataList": [
+    {
+      "name": "Keyboard",
+      "keycodes": [-1, 0, 0, 0],
+      "dynamicX": "${margin} * 3 + ${width} * 2",
+      "dynamicY": "${margin}",
+      "isToggle": false,
+      "passThruEnabled": false,
+      "opacity": 1.0,
+      "bgColor": 1291845632,
+      "strokeColor": -1,
+      "strokeWidth": 0.0,
+      "cornerRadius": 0.0,
+      "isSwipeable": false,
+      "displayInGame": true,
+      "displayInMenu": true,
+      "width": 80.0,
+      "height": 30.0
+    },
+    {
+      "name": "Mouse",
+      "keycodes": [-5, 0, 0, 0],
+      "dynamicX": "${right}",
+      "dynamicY": "${margin}",
+      "isToggle": false,
+      "passThruEnabled": false,
+      "opacity": 1.0,
+      "bgColor": 1291845632,
+      "strokeColor": -1,
+      "strokeWidth": 0.0,
+      "cornerRadius": 0.0,
+      "isSwipeable": false,
+      "displayInGame": true,
+      "displayInMenu": true,
+      "width": 80.0,
+      "height": 30.0
+    },
+    {
+      "name": "W",
+      "keycodes": [87, 0, 0, 0],
+      "dynamicX": "${margin} * 2 + ${width}",
+      "dynamicY": "${bottom} - ${margin} * 3 - ${height} * 2",
+      "isToggle": true,
+      "passThruEnabled": false,
+      "opacity": 1.0,
+      "bgColor": 1291845632,
+      "strokeColor": -1,
+      "strokeWidth": 0.0,
+      "cornerRadius": 0.0,
+      "isSwipeable": false,
+      "displayInGame": true,
+      "displayInMenu": false,
+      "width": 50.0,
+      "height": 50.0
+    },
+    {
+      "name": "A",
+      "keycodes": [65, 0, 0, 0],
+      "dynamicX": "${margin}",
+      "dynamicY": "${bottom} - ${margin} * 2 - ${height}",
+      "isToggle": true,
+      "passThruEnabled": false,
+      "opacity": 1.0,
+      "bgColor": 1291845632,
+      "strokeColor": -1,
+      "strokeWidth": 0.0,
+      "cornerRadius": 0.0,
+      "isSwipeable": false,
+      "displayInGame": true,
+      "displayInMenu": false,
+      "width": 50.0,
+      "height": 50.0
+    },
+    {
+      "name": "S",
+      "keycodes": [83, 0, 0, 0],
+      "dynamicX": "${margin} * 2 + ${width}",
+      "dynamicY": "${bottom} - ${margin}",
+      "isToggle": true,
+      "passThruEnabled": false,
+      "opacity": 1.0,
+      "bgColor": 1291845632,
+      "strokeColor": -1,
+      "strokeWidth": 0.0,
+      "cornerRadius": 0.0,
+      "isSwipeable": false,
+      "displayInGame": true,
+      "displayInMenu": false,
+      "width": 50.0,
+      "height": 50.0
+    },
+    {
+      "name": "D",
+      "keycodes": [68, 0, 0, 0],
+      "dynamicX": "${margin} * 3 + ${width} * 2",
+      "dynamicY": "${bottom} - ${margin} * 2 - ${height}",
+      "isToggle": true,
+      "passThruEnabled": false,
+      "opacity": 1.0,
+      "bgColor": 1291845632,
+      "strokeColor": -1,
+      "strokeWidth": 0.0,
+      "cornerRadius": 0.0,
+      "isSwipeable": false,
+      "displayInGame": true,
+      "displayInMenu": false,
+      "width": 50.0,
+      "height": 50.0
+    }
+  ],
+  "mDrawerDataList": [],
+  "mJoystickDataList": []
+}
+```
+
+<Tip>
+GLFW key codes used above: `W` = 87, `A` = 65, `S` = 83, `D` = 68, `Space` = 32, `E` = 69, `Tab` = 258, `F3` = 292, `F5` = 294, `T` = 84, `Left Shift` = 340.
+</Tip>

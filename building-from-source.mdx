@@ -1,0 +1,195 @@
+---
+title: "Building PojavLauncher from Source on Android"
+sidebarTitle: "Building from Source"
+description: "Step-by-step guide to compiling PojavLauncher from source: quick Gradle build plus detailed steps for JRE, LWJGL3, language list, GLFW stub, and final APK."
+---
+
+Building PojavLauncher yourself gives you full control over the code, lets you test local changes, and produces a debug APK without waiting for an official release. The quickest path takes only two commands; the detailed path walks through every dependency so you know exactly what goes into the final APK.
+
+<Warning>
+  **PojavLauncher has been discontinued.** These build instructions apply to the final archived state of the repository. For active development, consider the successor project [Amethyst Android](https://github.com/AngelAuraMC/Amethyst-Android).
+</Warning>
+
+## Prerequisites
+
+Before you start, make sure the following tools are available on your machine:
+
+| Tool | Notes |
+|---|---|
+| **Git** | Used to clone the repository |
+| **JDK 11 or later** | Required by the Gradle build system (`org.gradle.jvmargs=-Xmx4096M` is set in `gradle.properties`) |
+| **Android SDK** | Install via [Android Studio](https://developer.android.com/studio) or the standalone command-line tools |
+| **Android NDK r25c** (`25.2.9519653`) | The `ndkVersion` is pinned in `app_pojavlauncher/build.gradle` |
+| **Android Build Tools 34** | Specified as `buildToolsVersion = '34.0.0'` |
+
+<Tip>
+  The easiest way to satisfy the Android SDK, NDK, and Build Tools requirements is to install **Android Studio** and use its **SDK Manager** to install the exact versions listed above.
+</Tip>
+
+---
+
+## Quick Build (Recommended)
+
+The repository is configured to download all pre-built native dependencies automatically when you run Gradle. This is the fastest way to get a working APK.
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/PojavLauncherTeam/PojavLauncher.git
+    cd PojavLauncher
+    ```
+  </Step>
+  <Step title="Build the debug APK">
+    <Tabs>
+      <Tab title="Linux / macOS">
+        ```bash
+        ./gradlew :app_pojavlauncher:assembleDebug
+        ```
+      </Tab>
+      <Tab title="Windows">
+        ```batch
+        gradlew.bat :app_pojavlauncher:assembleDebug
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="Locate the output APK">
+    After a successful build, the APK is written to:
+
+    ```
+    app_pojavlauncher/build/outputs/apk/debug/
+    ```
+
+    Transfer the `.apk` file to your Android device and install it as described in the [Installation guide](/installation).
+  </Step>
+</Steps>
+
+<Note>
+  Gradle downloads around 4 GB of JVM args headroom is allocated (`-Xmx4096M`). Make sure your machine has at least 4 GB of RAM available for the build daemon.
+</Note>
+
+---
+
+## Detailed Build
+
+If you need to customise native dependencies — for example, to use a self-compiled JRE or a patched LWJGL3 — follow these steps in order.
+
+### Step 1 — Java Runtime Environment (JRE)
+
+PojavLauncher bundles a mobile port of OpenJDK for ARM and x86 Android targets. You have two options:
+
+<Tabs>
+  <Tab title="Download pre-built JRE (recommended)">
+    1. Navigate to the [android-openjdk-build-multiarch Actions](https://github.com/PojavLauncherTeam/android-openjdk-build-multiarch/actions) page on GitHub.
+    2. Open the most recent successful CI run.
+    3. Download the **`jre8-pojav`** artifact (a zip containing pre-built JREs for all supported architectures).
+    4. Extract the zip and place its contents in the expected location inside your PojavLauncher working directory (follow any `README` notes in the artifact for exact placement).
+
+    <Note>
+      GitHub artifact downloads require a free GitHub account. Log in before attempting to download.
+    </Note>
+  </Tab>
+  <Tab title="Build the JRE yourself">
+    Follow the build instructions in the [android-openjdk-build-multiarch](https://github.com/PojavLauncherTeam/android-openjdk-build-multiarch) repository. This process requires a Linux host and can take a significant amount of time to compile all four architectures.
+  </Tab>
+</Tabs>
+
+### Step 2 — LWJGL3
+
+PojavLauncher uses a custom fork of LWJGL3 with Android-specific patches. Build instructions are maintained in the [lwjgl3 fork repository](https://github.com/PojavLauncherTeam/lwjgl3).
+
+### Step 3 — Update the Language List
+
+Translations are managed through Crowdin, which adds new language resources automatically. Because of this, the language list file must be regenerated before each build — otherwise the build will fail or produce an incomplete APK.
+
+From the **root of the repository**, run the appropriate script for your platform:
+
+<Tabs>
+  <Tab title="Linux / macOS">
+    ```bash
+    chmod +x scripts/languagelist_updater.sh
+    bash scripts/languagelist_updater.sh
+    ```
+  </Tab>
+  <Tab title="Windows">
+    ```batch
+    scripts\languagelist_updater.bat
+    ```
+  </Tab>
+</Tabs>
+
+<Warning>
+  Skipping this step can cause the build to fail with a missing resource error. Always run the language list updater when building from a freshly cloned repository or after pulling new commits.
+</Warning>
+
+### Step 4 — Build the GLFW Stub
+
+The launcher's input system depends on a custom GLFW stub (`jre_lwjgl3glfw`). Build it before assembling the main APK:
+
+<Tabs>
+  <Tab title="Linux / macOS">
+    ```bash
+    ./gradlew :jre_lwjgl3glfw:build
+    ```
+  </Tab>
+  <Tab title="Windows">
+    ```batch
+    gradlew.bat :jre_lwjgl3glfw:build
+    ```
+  </Tab>
+</Tabs>
+
+### Step 5 — Build the Launcher APK
+
+With all dependencies in place, assemble the final debug APK:
+
+<Tabs>
+  <Tab title="Linux / macOS">
+    ```bash
+    ./gradlew :app_pojavlauncher:assembleDebug
+    ```
+  </Tab>
+  <Tab title="Windows">
+    ```batch
+    gradlew.bat :app_pojavlauncher:assembleDebug
+    ```
+  </Tab>
+</Tabs>
+
+The output APK will be located at:
+
+```
+app_pojavlauncher/build/outputs/apk/debug/
+```
+
+---
+
+## Build Variants
+
+The `app_pojavlauncher` module defines several build types you can target:
+
+| Gradle task | Description |
+|---|---|
+| `assembleDebug` | Debug build with `.debug` application ID suffix — safe to install alongside the release APK |
+| `assembleRelease` | Release build (no minification by default to preserve `java.awt` references) |
+| `assembleProguard` | Debug variant with ProGuard minification enabled |
+| `assembleGplay` | Google Play release variant (requires keystore environment variables) |
+
+<Note>
+  The Gradle daemon is configured with `org.gradle.configureondemand=true` in `gradle.properties`. This is required because `jre_lwjgl3glfw` must compile with Java 8 while `app_pojavlauncher` uses plugins that require Java 11. Do not remove this setting.
+</Note>
+
+---
+
+## Subprojects
+
+`settings.gradle` declares the following Gradle subprojects — all of them are included in the repository:
+
+```groovy
+include ':jre_lwjgl3glfw'       // GLFW stub (native input bridge)
+include ':app_pojavlauncher'    // Main launcher application
+include ':arc_dns_injector'     // DNS injection helper
+include ':forge_installer'      // Headless Forge installer
+```
+
+The main `assembleDebug` task will automatically trigger the `forge_installer:jar`, `arc_dns_injector:jar`, and `jre_lwjgl3glfw:jar` tasks via the `mergeDebugAssets` dependency declared in `app_pojavlauncher/build.gradle`.

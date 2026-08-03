@@ -1,0 +1,99 @@
+---
+title: "PojavLauncher: Minecraft Java Edition on Android"
+sidebarTitle: "Introduction"
+description: "Discover PojavLauncher — an open-source Minecraft: Java Edition launcher for Android supporting Forge, Fabric, multi-JRE, custom controls, and versions from rd-132211 to 1.21."
+---
+
+PojavLauncher is a free, open-source launcher that brings Minecraft: Java Edition to Android devices. Born from the ashes of [Boardwalk](https://github.com/zhuowei/Boardwalk), it runs the full Java Edition of the game across ARM32, ARM64, x86, and x86_64 Android hardware — complete with mod loader support, custom on-screen controls, gamepad and gyroscope input, and a wide span of Minecraft versions stretching from the earliest rd-132211 pre-classic all the way through 1.21 snapshots and Combat Test builds.
+
+<Warning>
+  **PojavLauncher has been discontinued** and is no longer actively supported. Its successor project is [Amethyst Android](https://github.com/AngelAuraMC/Amethyst-Android). The information on these pages reflects the final state of the project.
+</Warning>
+
+## What Is PojavLauncher?
+
+PojavLauncher translates Minecraft's Java-based renderer and input system so they run natively on Android. It bundles a mobile port of OpenJDK (versions 8, 17, and 21 are all supported), a custom LWJGL3 back-end, and GL4ES to bridge OpenGL calls to OpenGL ES — giving you a remarkably complete Minecraft experience on a phone or tablet.
+
+The Android source code lives in this repository. iOS and iPadOS are handled by a separate project: [PojavLauncher_iOS](https://github.com/PojavLauncherTeam/PojavLauncher_iOS).
+
+## Supported Platforms
+
+| Architecture | Support |
+|---|---|
+| ARM64 (aarch64) | ✅ Full support |
+| ARM32 (armeabi-v7a) | ✅ Full support |
+| x86_64 | ✅ Full support |
+| x86 | ✅ Full support |
+
+## Supported Minecraft Versions
+
+PojavLauncher can launch virtually every publicly released version of Minecraft: Java Edition:
+
+- **Pre-classic / Classic / Indev / Infdev / Alpha / Beta** — from rd-132211 onward
+- **Release** — 1.0 through 1.20.x and 1.21
+- **Snapshots** — including 1.21 development snapshots
+- **Combat Test** versions
+
+## Key Capabilities
+
+- **Mod loaders** — Forge, Fabric, Quilt, and OptiFine can all be installed and run
+- **Modpacks** — install and manage modpacks directly inside the launcher
+- **Multi-JRE** — switch between OpenJDK 8, 17, and 21 per-profile
+- **Custom controls** — fully editable on-screen button layouts
+- **Gamepad support** — play with a Bluetooth or USB controller
+- **Gyroscope input** — use your device's motion sensors to look around
+- **OpenAL audio** — spatial audio works on most devices
+
+## Current Feature Status
+
+- ✅ OpenJDK 8, 17, and 21 mobile ports for ARM32, ARM64, x86, x86_64
+- ✅ Headless and GUI mod installer
+- ✅ OpenGL via GL4ES in the OpenJDK environment
+- ✅ OpenAL audio (works on most devices)
+- ✅ Support for Minecraft 1.12.2 and below
+- ✅ Support for Minecraft 1.13 and above
+- ✅ Support for Minecraft 1.17 (22w13a) and above
+- ✅ Game surface pinch-to-zoom
+- ✅ Native-code input pipe
+- ✅ Fully rewritten controls system
+
+## Licensing
+
+PojavLauncher is released under the **GNU Lesser General Public License v3.0 (LGPL-3.0)**. See the [LICENSE](https://github.com/PojavLauncherTeam/PojavLauncher/blob/v3_openjdk/LICENSE) file in the repository for full terms.
+
+## Credits & Dependencies
+
+PojavLauncher stands on the shoulders of several excellent open-source projects:
+
+| Project | License |
+|---|---|
+| [Boardwalk](https://github.com/zhuowei/Boardwalk) — JVM launcher foundation | Apache 2.0 / GPLv2 |
+| [GL4ES](https://github.com/PojavLauncherTeam/gl4es) — OpenGL → OpenGL ES bridge | MIT |
+| [OpenJDK](https://github.com/PojavLauncherTeam/openjdk-multiarch-jdk8u) — Java runtime | GNU GPLv2 |
+| [LWJGL3](https://github.com/PojavLauncherTeam/lwjgl3) — Lightweight Java Game Library | BSD-3 |
+| [LWJGLX](https://github.com/PojavLauncherTeam/lwjglx) — LWJGL2 API compatibility layer | Unknown |
+| [Mesa 3D Graphics Library](https://gitlab.freedesktop.org/mesa/mesa) | MIT |
+| [pro-grade](https://github.com/pro-grade/pro-grade) — Java security sandbox | Apache 2.0 |
+| [bhook](https://github.com/bytedance/bhook) — Exit code trapping | MIT |
+| [libepoxy](https://github.com/anholt/libepoxy) — OpenGL dispatch | MIT |
+| [virglrenderer](https://github.com/PojavLauncherTeam/virglrenderer) | MIT |
+| Android Support Libraries | Apache 2.0 |
+
+Avatar art provided by [MCHeads](https://mc-heads.net).
+
+## Where to Go Next
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Download and install PojavLauncher on your Android device in minutes.
+  </Card>
+  <Card title="Playing Minecraft" icon="gamepad" href="/guides/playing">
+    Learn how to launch your first Minecraft session on Android.
+  </Card>
+  <Card title="Controls & Input" icon="hand-pointer" href="/guides/controls">
+    Set up on-screen buttons, gamepad, and gyroscope controls.
+  </Card>
+  <Card title="Installing Forge" icon="puzzle-piece" href="/guides/forge">
+    Add Forge and start playing with your favourite mods.
+  </Card>
+</CardGroup>

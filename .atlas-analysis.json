@@ -1,0 +1,87 @@
+{
+  "projectType": "saas",
+  "projectName": "PojavLauncher",
+  "projectDescription": "An open-source Minecraft: Java Edition launcher for Android devices that runs all versions from rd-132211 through 1.21 snapshots, with support for Forge, Fabric, Quilt, and OptiFine mod loaders.",
+  "theme": "almond",
+  "primaryColor": "#2d7d3a",
+  "lightColor": "#4caf50",
+  "darkColor": "#1b5e20",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "building-from-source"
+            ]
+          },
+          {
+            "group": "Using the Launcher",
+            "pages": [
+              "guides/accounts",
+              "guides/playing",
+              "guides/profiles",
+              "guides/controls"
+            ]
+          },
+          {
+            "group": "Mod Loaders & Mods",
+            "pages": [
+              "guides/forge",
+              "guides/fabric-quilt",
+              "guides/optifine",
+              "guides/modpacks"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/video-settings",
+              "configuration/java-settings",
+              "configuration/control-settings",
+              "configuration/experimental-settings"
+            ]
+          },
+          {
+            "group": "Advanced Topics",
+            "pages": [
+              "advanced/multi-runtime",
+              "advanced/custom-controls-format",
+              "advanced/renderers",
+              "advanced/troubleshooting"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Runs Minecraft: Java Edition on Android (ARM32, ARM64, x86, x86_64)",
+    "Supports Minecraft versions from rd-132211 through 1.21 snapshots",
+    "Integrated mod loader support for Forge, Fabric, Quilt, and OptiFine",
+    "Modpack installation via Modrinth, CurseForge, and Technic",
+    "Multi-Runtime (Multi-JRE) support for Java 8, 17, and 21",
+    "Fully customizable touch controls with a visual editor",
+    "Gamepad/controller support with button remapping",
+    "Gyroscope camera control support",
+    "Multiple rendering backends: OpenGL ES 2, OpenGL ES 3, Vulkan (Zink)",
+    "Microsoft (Xbox Live) and local account authentication",
+    "Per-profile game directory, JRE, renderer, and control layout"
+  ],
+  "publicApiSurface": [
+    "LauncherPreferences — all PREF_* settings constants and loadPreferences(Context)",
+    "MinecraftAccount — account model: load(), save(), parse(), isLocal(), isDemo()",
+    "MinecraftProfile — launcher profile model with lastVersionId, gameDir, javaArgs, pojavRendererName, controlFile",
+    "CustomControls — control layout model: ControlData, ControlDrawerData, ControlJoystickData",
+    "MultiRTUtils — runtime management: getRuntimes(), installRuntimeNamed(), getExactJreName(), getNearestJreName()",
+    "Tools — core utilities: DIR_GAME_HOME, DIR_GAME_NEW, CTRLMAP_PATH, CTRLDEF_FILE, MULTIRT_HOME",
+    "ControlData special buttons: SPECIALBTN_KEYBOARD, SPECIALBTN_MOUSEPRI, SPECIALBTN_VIRTUALMOUSE, etc.",
+    "Modpack sources: SOURCE_MODRINTH, SOURCE_CURSEFORGE, SOURCE_TECHNIC",
+    "Renderer keys: opengles2, opengles3, vulkan_zink, opengles3_virgl",
+    "Build system: ./gradlew :app_pojavlauncher:assembleDebug"
+  ]
+}

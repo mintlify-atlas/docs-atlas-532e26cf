@@ -1,0 +1,200 @@
+---
+title: "Creating and Editing Launch Profiles in PojavLauncher"
+sidebarTitle: "Profiles"
+description: "Understand every field in a PojavLauncher profile — version, game directory, JVM arguments, renderer, and control layout — and learn how to create or edit them."
+---
+
+A **profile** in PojavLauncher is a saved configuration that controls which Minecraft version is launched, where the game files live, which Java runtime is used, and many other per-session options. Every time you tap **Play**, the launcher reads the currently active profile and uses its settings to build the Java command line and locate game assets. You can maintain as many profiles as you like — one for each Minecraft version, a separate one for modded play, or a dedicated profile with a custom game directory for a specific modpack.
+
+<Warning>
+  **PojavLauncher has been discontinued.** Its successor is [Amethyst Android](https://github.com/AngelAuraMC/Amethyst-Android). These docs describe the final released state of PojavLauncher.
+</Warning>
+
+## Profile Storage
+
+All profiles are stored together in a single JSON file that follows the official Minecraft launcher profile format:
+
+```
+<game_home>/.minecraft/launcher_profiles.json
+```
+
+Where `<game_home>` defaults to `<external_storage>/games/PojavLauncher`. Each profile is stored as a key–value entry in the `profiles` map; the keys are UUIDs assigned by the launcher. A minimal file with one profile looks like:
+
+```json
+{
+  "profiles": {
+    "3f2504e0-4f89-11d3-9a0c-0305e82c3301": {
+      "name": "My Profile",
+      "lastVersionId": "1.20.4"
+    }
+  }
+}
+```
+
+## Opening the Profile Editor
+
+From the main screen, tap the **pencil (edit) icon** next to the version spinner. This opens the Profile Editor for the currently active profile. To create a brand-new profile instead, look for the **New profile** option in the version spinner dropdown.
+
+When you are finished making changes, tap **Save** to write the updated profile back to `launcher_profiles.json` and refresh the version spinner. Tap **Delete** to permanently remove the profile (the launcher requires at least one profile to exist, so deletion is blocked when only one profile remains).
+
+## Profile Fields
+
+### Name
+
+```
+name
+```
+
+The display name shown in the version spinner dropdown and in the profile editor title bar. Use something descriptive, such as `"Vanilla 1.20.4"` or `"Forge 1.19.2 – Tech Pack"`.
+
+---
+
+### Minecraft Version (`lastVersionId`)
+
+```
+lastVersionId
+```
+
+The Minecraft version this profile launches. Three special values are understood:
+
+| Value | Meaning |
+|---|---|
+| `latest-release` | Always resolves to the most recent stable release at launch time |
+| `latest-snapshot` | Always resolves to the most recent snapshot at launch time |
+| `<version string>` | A specific version such as `1.20.4` or `1.20.1-forge-47.3.0` |
+
+Tap the **version select button** in the profile editor to pick from a filterable list of all available versions (including snapshots if you enable them in the version selector dialog).
+
+<Note>
+  If the version string does not match any known version, the launcher shows an "Unknown" label and refuses to start the game. This can happen if the version list has not loaded yet — wait a few seconds and reopen the profile editor.
+</Note>
+
+---
+
+### Game Directory (`gameDir`)
+
+```
+gameDir
+```
+
+Overrides the default `.minecraft` folder used for saves, resource packs, mods, and all other game data. Leave this field empty to use the global default (`<game_home>/.minecraft`).
+
+PojavLauncher recognises a special **`pojav://`** URI prefix for launcher-relative paths:
+
+```
+pojav://my-modpack
+```
+
+This resolves to `<game_home>/my-modpack` at runtime, making the path portable across different devices even if the absolute storage path differs. If you supply an absolute path (without the prefix) it is used as-is.
+
+<Tip>
+  Use separate game directories for different modpacks so their `mods`, `config`, and `saves` folders never interfere with each other.
+</Tip>
+
+---
+
+### Java Runtime (`javaDir`)
+
+```
+javaDir
+```
+
+Overrides the JRE used to launch this profile. The value uses the same `pojav://` prefix to point at a runtime installed by PojavLauncher's Multi-Runtime manager:
+
+```
+pojav://java-17-openjdk
+```
+
+Leave blank to use the launcher's globally selected default runtime. In the profile editor, this field is presented as a spinner populated with all installed runtimes; selecting `<Default>` clears the override.
+
+---
+
+### JVM Arguments (`javaArgs`)
+
+```
+javaArgs
+```
+
+Additional arguments passed to the Java virtual machine before the game's main class. Common uses include adjusting the heap size or enabling experimental JVM flags:
+
+```
+-Xmx2G -XX:+UseG1GC -XX:MaxGCPauseMillis=50
+```
+
+These arguments are appended to the launcher's own generated command line. Leave the field empty to use no extra arguments.
+
+<Warning>
+  Specifying `-Xmx` here overrides the global memory allocation set in launcher settings. Set it to an appropriate value for your device — allocating more RAM than is physically available causes the game to crash immediately.
+</Warning>
+
+---
+
+### Renderer (`pojavRendererName`)
+
+```
+pojavRendererName
+```
+
+Selects the graphics translation layer for this profile, overriding the global renderer chosen in settings. Available options depend on device capabilities:
+
+| Renderer ID | Display Name | Notes |
+|---|---|---|
+| `opengles2` | Holy GL4ES | Works on all devices; translates OpenGL to OpenGL ES 2/3 |
+| `vulkan_zink` | Zink (Vulkan) | Requires Vulkan support; uses virglrenderer |
+| `opengles3_ltw` | LTW (OpenGL ES 3) | Requires OpenGL ES 3 and the LTW binary; Minecraft 1.17+ only |
+
+Setting this field to `null` (or leaving it as "Global default" in the editor spinner) means the global renderer preference is used.
+
+---
+
+### Control Layout File (`controlFile`)
+
+```
+controlFile
+```
+
+Path to a custom touch-control layout JSON file used when this profile is active. The file is selected from `<game_home>/controlmap/` via the file picker in the profile editor. Leave empty to use the globally configured default control layout.
+
+---
+
+### Resolution (`resolution`)
+
+```
+resolution
+```
+
+An optional array of two resolution objects that override the game's render resolution. When set, the game renders at the specified width and height rather than the device's native resolution. This can improve performance on high-DPI screens or fix display issues on certain devices.
+
+## Editing a Profile Step by Step
+
+<Steps>
+  <Step title="Open the profile editor">
+    On the main screen, tap the **pencil icon** next to the version spinner.
+  </Step>
+  <Step title="Set a name">
+    Enter a descriptive name in the **Profile name** field.
+  </Step>
+  <Step title="Choose a Minecraft version">
+    Tap the **version select button** and pick the version you want, or type it directly in the version field.
+  </Step>
+  <Step title="Configure optional overrides">
+    Fill in **Game directory**, **JVM arguments**, **Runtime**, **Renderer**, or **Control layout** as needed. All of these fields are optional — leave them blank to inherit global defaults.
+  </Step>
+  <Step title="Save">
+    Tap **Save**. The version spinner on the main screen updates to reflect the new profile settings.
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Playing the Game" icon="play" href="/guides/playing">
+    Launch Minecraft once your profile is configured.
+  </Card>
+  <Card title="Controls" icon="gamepad" href="/guides/controls">
+    Assign a custom control layout to this profile.
+  </Card>
+  <Card title="Forge" icon="hammer" href="/guides/forge">
+    Install Forge and point a profile at the resulting modded version.
+  </Card>
+</CardGroup>

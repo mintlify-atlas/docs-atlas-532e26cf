@@ -1,0 +1,211 @@
+---
+title: "Custom Touch Controls in PojavLauncher for Android"
+sidebarTitle: "Controls"
+description: "Build, edit, import, and export on-screen control layouts in PojavLauncher — covering buttons, drawers, joysticks, special actions, and dynamic positioning."
+---
+
+PojavLauncher ships with a fully visual touch-control editor that lets you design exactly the on-screen layout you need — from a minimal set of movement and inventory keys to a comprehensive layout with joysticks, drawers, and custom macros. Control layouts are stored as plain JSON files and can be shared across devices or downloaded from the community. Every profile can specify its own layout file, making it straightforward to use a different control scheme for 1.8 PvP versus a 1.20 survival build.
+
+<Warning>
+  **PojavLauncher has been discontinued.** Its successor is [Amethyst Android](https://github.com/AngelAuraMC/Amethyst-Android). These docs describe the final released state of PojavLauncher.
+</Warning>
+
+## Default Control Layout
+
+When no custom layout has been set and no `default.json` exists in the controlmap folder, the launcher generates a built-in default layout. It includes:
+
+| Button | Key / Action |
+|---|---|
+| **Keyboard** | Opens the virtual keyboard |
+| **GUI** | Toggles the control overlay visibility (show/hide all buttons) |
+| **PRI** | Primary (left) mouse click |
+| **SEC** | Secondary (right) mouse click |
+| **Mouse** | Toggles the virtual mouse cursor mode |
+| **F3** | Debug screen |
+| **T** | Open chat |
+| **Tab** | Show player list |
+| **F5** | Toggle third-person camera |
+| **W / A / S / D** | Movement (toggle-mode, so you can hold a direction) |
+| **E** | Inventory |
+| **Shift** | Sneak (toggle) |
+| **Space** | Jump |
+
+The default layout file path is:
+
+```
+<game_home>/controlmap/default.json
+```
+
+Where `<game_home>` defaults to `<external_storage>/games/PojavLauncher`.
+
+## Opening the Control Editor
+
+From the main screen, tap the **Custom Controls** button (the gamepad icon in the toolbar). The `CustomControlsActivity` opens and loads the current default layout. You can also reach the editor from inside a running game via the in-game overlay menu.
+
+The editor canvas fills the screen, showing every button in its actual position and size. A **drawer button** (chevron icon) in the corner opens the editor action menu.
+
+## Editor Action Menu
+
+Swipe in or tap the drawer button to reveal the action menu:
+
+| Option | What it does |
+|---|---|
+| **Add Button** | Places a new `ControlData` button at the centre of the screen |
+| **Add Drawer** | Places a new `ControlDrawerData` drawer that expands sub-buttons |
+| **Add Joystick** | Places a new `ControlJoystickData` joystick |
+| **Load** | Opens a file picker rooted at `<game_home>/controlmap/` to load an existing layout |
+| **Save** | Saves the current layout to the same file it was loaded from |
+| **Set as Default** | Marks the current layout as the global default (`PREF_DEFAULTCTRL_PATH`) |
+| **Export** | Saves the layout and shares it via Android's share sheet as a `.json` file |
+
+## Control Elements
+
+### Buttons (`ControlData`)
+
+A `ControlData` object represents a single tappable button. Its JSON fields are:
+
+| Field | Type | Description |
+|---|---|---|
+| `name` | `string` | Label displayed on the button face |
+| `keycodes` | `int[4]` | Up to four GLFW keycodes (or special-button constants) sent when tapped; unused slots default to `GLFW_KEY_UNKNOWN` |
+| `dynamicX` | `string` | Expression defining the button's X position (see [Dynamic Positioning](#dynamic-positioning)) |
+| `dynamicY` | `string` | Expression defining the button's Y position |
+| `width` | `float` | Button width in dp |
+| `height` | `float` | Button height in dp |
+| `isToggle` | `boolean` | If `true`, the button stays pressed until tapped again (useful for movement keys) |
+| `passThruEnabled` | `boolean` | If `true`, touch events pass through to the game canvas below the button |
+| `opacity` | `float` | Visibility from `0.0` (invisible) to `1.0` (fully opaque) |
+| `bgColor` | `int` | ARGB background colour |
+| `strokeColor` | `int` | ARGB border colour |
+| `strokeWidth` | `float` | Border thickness in dp |
+| `cornerRadius` | `float` | Corner rounding from 0 % to 100 % |
+| `isSwipeable` | `boolean` | If `true`, swiping across the button fires successive key events |
+| `displayInGame` | `boolean` | Show this button while the game has grabbed the mouse (gameplay mode) |
+| `displayInMenu` | `boolean` | Show this button while a GUI / menu is open |
+| `isHideable` | `boolean` (transient) | Whether the toggle-controls button can hide this button |
+
+### Special Button Constants
+
+Several reserved keycode values trigger launcher-level actions rather than sending a keypress to the game:
+
+| Constant | Value | Action |
+|---|---|---|
+| `SPECIALBTN_KEYBOARD` | `-1` | Opens the Android virtual keyboard |
+| `SPECIALBTN_TOGGLECTRL` | `-2` | Toggles the visibility of all hideable control buttons |
+| `SPECIALBTN_MOUSEPRI` | `-3` | Fires a primary (left) mouse click |
+| `SPECIALBTN_MOUSESEC` | `-4` | Fires a secondary (right) mouse click |
+| `SPECIALBTN_VIRTUALMOUSE` | `-5` | Toggles the virtual mouse cursor on or off |
+| `SPECIALBTN_MOUSEMID` | `-6` | Fires a middle mouse click |
+| `SPECIALBTN_SCROLLUP` | `-7` | Scrolls up |
+| `SPECIALBTN_SCROLLDOWN` | `-8` | Scrolls down |
+| `SPECIALBTN_MENU` | `-9` | Opens the in-launcher overlay menu |
+
+To assign a special action to a button, set its `keycodes[0]` to the corresponding negative integer value.
+
+### Drawers (`ControlDrawerData`)
+
+A drawer is a collapsed button that expands a row of sub-buttons when tapped, keeping the main layout uncluttered. Its structure:
+
+```json
+{
+  "properties": { /* ControlData for the drawer handle */ },
+  "buttonProperties": [ /* array of ControlData for sub-buttons */ ],
+  "orientation": "LEFT"
+}
+```
+
+The `orientation` field controls the direction the sub-buttons expand when the drawer is opened:
+
+- `DOWN`, `LEFT`, `UP`, `RIGHT` — expand in that cardinal direction
+- `FREE` — sub-buttons can be positioned freely
+
+### Joysticks (`ControlJoystickData`)
+
+A `ControlJoystickData` extends `ControlData` with two extra fields:
+
+| Field | Type | Description |
+|---|---|---|
+| `forwardLock` | `boolean` | When `true`, releasing the joystick keeps the last forward direction held |
+| `absolute` | `boolean` | When `true`, the joystick thumb jumps to your initial touch point (absolute mode); when `false`, the thumb stays centred and only the delta matters (relative mode) |
+
+## Dynamic Positioning
+
+Button positions are not stored as fixed pixel coordinates. Instead, each button stores two **expression strings** (`dynamicX`, `dynamicY`) that are evaluated at runtime using the exp4j expression engine. This makes layouts automatically adapt to different screen sizes and orientations.
+
+Available variables:
+
+| Variable | Value |
+|---|---|
+| `top` | `0` (top edge) |
+| `left` | `0` (left edge) |
+| `right` | `screen_width − button_width` |
+| `bottom` | `screen_height − button_height` |
+| `width` | Button width in pixels |
+| `height` | Button height in pixels |
+| `screen_width` | Physical screen width in pixels |
+| `screen_height` | Physical screen height in pixels |
+| `margin` | Computed margin distance (based on button size preference) |
+| `preferred_scale` | Global button scale preference value |
+
+Two helper functions are also available:
+
+- `dp(x)` — converts `x` from pixels to dp
+- `px(x)` — converts `x` from dp to pixels
+
+**Example expressions** from the default layout:
+
+```
+// Keyboard button — top-right area
+dynamicX = "${margin} * 3 + ${width} * 2"
+dynamicY = "${margin}"
+
+// Jump button — bottom-right
+dynamicX = "${right} - ${margin} * 2 - ${width}"
+dynamicY = "${bottom} - ${margin} * 2 - ${height}"
+```
+
+## Importing and Exporting Layouts
+
+Control layouts are standard JSON files. To bring in a layout from another source:
+
+<Steps>
+  <Step title="Copy the JSON file to the controlmap folder">
+    Place the `.json` file in `<game_home>/controlmap/` using a file manager or USB transfer.
+  </Step>
+  <Step title="Load it in the editor">
+    Open the control editor, tap the drawer button, and select **Load**. Navigate to the file and tap it to load the layout onto the canvas.
+  </Step>
+  <Step title="Set it as default or assign it to a profile">
+    Tap **Set as Default** to make it the global layout, or close the editor and assign the file path to a specific profile via the profile editor's **Control layout** field.
+  </Step>
+</Steps>
+
+To **export** your layout for sharing:
+
+<Steps>
+  <Step title="Open the editor and load the layout you want to share">
+    Use **Load** to open the target file if it is not already active.
+  </Step>
+  <Step title="Tap Export">
+    The editor saves the file and opens Android's share sheet. Send it via any available app.
+  </Step>
+</Steps>
+
+## Gamepad Support
+
+If you have a Bluetooth or USB gamepad, PojavLauncher includes a **Gamepad Mapper** that lets you assign gamepad buttons and axes to in-game actions. Access the mapper by long-pressing the **News** button on the main screen. Gamepad configuration is stored separately from touch control layouts and applies on top of them.
+
+<Note>
+  Detailed gamepad configuration is covered in the Configuration section of these docs. Touch control layouts and gamepad mappings are independent — you can use both simultaneously.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Playing the Game" icon="play" href="/guides/playing">
+    Understand in-game touch gestures and how to exit the game.
+  </Card>
+  <Card title="Profiles" icon="sliders" href="/guides/profiles">
+    Assign a specific control layout to a profile.
+  </Card>
+</CardGroup>

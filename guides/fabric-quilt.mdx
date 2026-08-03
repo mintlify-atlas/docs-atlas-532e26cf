@@ -1,0 +1,128 @@
+---
+title: "Install Fabric and Quilt Mods in PojavLauncher"
+sidebarTitle: "Fabric & Quilt"
+description: "Step-by-step guide to installing the Fabric or Quilt mod loader on PojavLauncher for Android and loading your favourite mods."
+---
+
+Fabric and Quilt are lightweight, modular mod-loader frameworks for Minecraft: Java Edition. Fabric is the most widely adopted community loader, while Quilt is a community fork that adds additional tooling and a broader API surface. PojavLauncher handles both through a shared internal code path — `FabriclikeUtils` and `FabriclikeDownloadTask` — so the installation experience is nearly identical for both loaders. Once installed, each loader receives its own launch profile that PojavLauncher creates and manages automatically.
+
+<Note>
+  Fabric and Quilt mods are **not** compatible with Forge. Do not mix mod JARs from different loader ecosystems in the same profile.
+</Note>
+
+## Installing the Mod Loader
+
+<Tabs>
+  <Tab title="Fabric">
+    <Steps>
+      <Step title="Open the mod-loader installer">
+        From the PojavLauncher main menu, tap the **Install mod loader** button (the puzzle-piece icon beneath the version selector).
+      </Step>
+      <Step title="Select Fabric">
+        In the installer dialog, choose **Fabric** from the list of available loaders.
+      </Step>
+      <Step title="Choose a Minecraft version">
+        PojavLauncher fetches the supported game-version list from `https://meta.fabricmc.net/v2/versions/game` and presents it in a drop-down. Select the Minecraft version you want to mod.
+      </Step>
+      <Step title="Choose a Fabric Loader version">
+        After selecting the game version, the launcher queries `https://meta.fabricmc.net/v2/versions/loader/<gameVersion>` and displays available loader builds. Stable releases are shown first; beta builds are labelled accordingly. Select the loader version you want — the latest stable build is recommended.
+      </Step>
+      <Step title="Confirm and wait">
+        Tap **Install**. PojavLauncher downloads the Fabric profile JSON from `https://meta.fabricmc.net/v2/versions/loader/<gameVersion>/<loaderVersion>/profile/json`, writes it to your versions directory, and creates a new launch profile named **Fabric** automatically. You will see a progress indicator while the download runs.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Quilt">
+    <Steps>
+      <Step title="Open the mod-loader installer">
+        From the PojavLauncher main menu, tap the **Install mod loader** button (the puzzle-piece icon beneath the version selector).
+      </Step>
+      <Step title="Select Quilt">
+        In the installer dialog, choose **Quilt** from the list of available loaders.
+      </Step>
+      <Step title="Choose a Minecraft version">
+        PojavLauncher fetches the supported game-version list from `https://meta.quiltmc.org/v3/versions/game` and displays it. Select the Minecraft version you want to mod.
+      </Step>
+      <Step title="Choose a Quilt Loader version">
+        After selecting the game version, the launcher queries `https://meta.quiltmc.org/v3/versions/loader/<gameVersion>` and shows available loader builds. Because Quilt does not distinguish stable from beta by a flag, PojavLauncher marks a build as stable when its version string does not contain `beta`. Select the version you want.
+      </Step>
+      <Step title="Confirm and wait">
+        Tap **Install**. PojavLauncher downloads the Quilt profile JSON from `https://meta.quiltmc.org/v3/versions/loader/<gameVersion>/<loaderVersion>/profile/json`, writes it to your versions directory, and creates a new launch profile named **Quilt** automatically.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Understanding Version Objects
+
+Internally, PojavLauncher represents each loader entry as a `FabricVersion` object. Understanding these fields can help you read log output or manually inspect cached version data.
+
+| Field | Type | Description |
+|---|---|---|
+| `version` | `String` | The human-readable version string (e.g. `0.15.11`) |
+| `stable` | `boolean` | `true` for release builds; `false` for beta/snapshot builds |
+
+The `LoaderDescriptor` subclass additionally wraps a nested `FabricVersion loader` object that carries the metadata for a specific loader build paired with a given game version.
+
+## Installing Mods
+
+After the loader profile is created you can start adding mods.
+
+<Steps>
+  <Step title="Locate the mods folder">
+    Mods live inside your game home directory:
+
+    ```
+    <game_home>/.minecraft/mods/
+    ```
+
+    The default `<game_home>` on Android is `/storage/emulated/0/games/PojavLauncher`. You can confirm or change it in **Settings → Game directory**.
+  </Step>
+  <Step title="Copy mod JARs">
+    Copy each mod's `.jar` file into the `mods/` directory using your preferred file manager (e.g. Files by Google, MiXplorer, or a USB connection to a PC).
+  </Step>
+  <Step title="Select the correct profile">
+    Back in PojavLauncher, make sure the Fabric or Quilt profile is selected in the version drop-down, then tap **Play**.
+  </Step>
+</Steps>
+
+<Note>
+  **Fabric API is not bundled with the loader.** Most Fabric mods depend on it. Download `fabric-api-<version>.jar` from [Modrinth](https://modrinth.com/mod/fabric-api) or [CurseForge](https://www.curseforge.com/minecraft/mc-mods/fabric-api) and place it in your `mods/` folder alongside your other mods.
+</Note>
+
+## Java Version Requirements
+
+The Java runtime required depends on the version of Minecraft you are running:
+
+| Minecraft version | Required JRE |
+|---|---|
+| 1.16.5 and earlier | Java 8 |
+| 1.17 – 1.20.4 | Java 17 |
+| 1.20.5 and later | Java 21 |
+
+<Tip>
+  PojavLauncher supports multiple Java runtimes installed side-by-side. See [Managing Java Runtimes](/advanced/multi-runtime) to learn how to install and switch between JRE versions.
+</Tip>
+
+## Troubleshooting
+
+<Accordion title="The installer says 'Data not available' or fails silently">
+  PojavLauncher caches version metadata locally. If the cache is stale or the meta server is unreachable, the version list may fail to load. Check your internet connection, then clear the launcher cache in **Settings → Clear cache** and try again.
+</Accordion>
+
+<Accordion title="Game crashes immediately on launch with Fabric">
+  The most common causes are:
+  - A mod is incompatible with the selected Minecraft version.
+  - Fabric API is missing from the `mods/` folder.
+  - The wrong Java version is active for the selected Minecraft version.
+  
+  Check the crash log in `<game_home>/.minecraft/crash-reports/` for details.
+</Accordion>
+
+<Accordion title="Quilt mods crash or are not detected">
+  Quilt is backwards-compatible with most Fabric mods, but some mods that use advanced Fabric internals may require the [Quilt Standard Libraries (QSL)](https://modrinth.com/mod/qsl) instead of Fabric API. Download QSL and add it to your `mods/` folder.
+</Accordion>
+
+<Accordion title="Can I use Fabric and Forge mods together?">
+  No. Fabric/Quilt and Forge are entirely separate mod ecosystems with incompatible class-loading mechanisms. You must maintain separate profiles for each loader.
+</Accordion>

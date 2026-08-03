@@ -1,0 +1,104 @@
+---
+title: "Java & JVM Runtime Settings in PojavLauncher Android"
+sidebarTitle: "Java Settings"
+description: "Manage Java runtimes, set custom JVM arguments, control RAM allocation, and configure the Java security sandbox for Minecraft on Android."
+---
+
+PojavLauncher runs Minecraft through a full Java runtime bundled on your device, which means you have real control over the JVM that launches the game. The **Java** settings screen lets you install and switch between multiple Java runtimes, pass arbitrary JVM flags, cap the heap size, and toggle the security sandbox. Getting these values right is one of the most impactful things you can do for stability and performance.
+
+## Runtime Manager
+
+<ParamField path="install_jre" type="action (button)">
+  Opens the **Multi-Runtime Manager** dialog, where you can:
+
+  - View all currently installed Java runtimes
+  - Install a new runtime from a `.tar.xz` archive (via the system file picker)
+  - Set which runtime is used as the default
+  - Remove runtimes you no longer need
+
+  Minecraft versions have different Java requirements — Java 8 for 1.16 and below, Java 17 for 1.17–1.20, and Java 21 for 1.21+. Use this manager to keep multiple runtimes installed side-by-side.
+
+  See [Multi-Runtime](/advanced/multi-runtime) for installation instructions.
+</ParamField>
+
+<ParamField path="defaultRuntime" type="string" default="first available runtime">
+  The name of the Java runtime that will be used when launching any profile that does not specify an explicit runtime. The value is set automatically to the first entry returned by the runtime manager when no preference has been saved yet.
+</ParamField>
+
+## Memory
+
+<ParamField path="allocation" type="integer (MB)" default="auto">
+  Amount of RAM in megabytes allocated to the Minecraft JVM heap (`-Xmx`). The seekbar is capped at a device-safe maximum calculated at runtime to ensure the Android OS itself retains enough memory to operate.
+
+  **Auto allocation logic** — `findBestRAMAllocation()` picks a default based on total device RAM:
+
+  | Device RAM | Default Allocation |
+  |---|---|
+  | < 1 024 MB | 296 MB |
+  | < 1 536 MB | 448 MB |
+  | < 2 048 MB | 656 MB |
+  | Any **32-bit** device | **696 MB** (hard cap) |
+  | < 3 064 MB | 936 MB |
+  | < 4 096 MB | 1 144 MB |
+  | < 6 144 MB | 1 536 MB |
+  | ≥ 6 144 MB (64-bit) | 2 048 MB |
+
+  **Maximum seekbar cap** (from `LauncherPreferenceJavaFragment`):
+  - 32-bit device or < 2 GB RAM → `min(1024, deviceRam)` MB
+  - Otherwise → `deviceRam − 800` MB (< 3 064 MB) or `deviceRam − 1024` MB (≥ 3 064 MB)
+
+  <Warning>
+    Allocating too little RAM causes Minecraft to lag and crash with `OutOfMemoryError`. Allocating too much prevents Android from running background processes and may trigger the OS memory killer, forcibly closing the game.
+  </Warning>
+</ParamField>
+
+## Custom JVM Arguments
+
+<ParamField path="javaArgs" type="string" default='""'>
+  A space-separated list of additional arguments passed directly to the JVM before the Minecraft main class. Useful for enabling garbage-collector tuning, system properties, and modding framework flags.
+
+  **Common examples:**
+
+  ```bash
+  # Set initial heap size to 256 MB (avoids slow GC ramp-up)
+  -Xms256m
+
+  # Use the G1 garbage collector (recommended for Minecraft)
+  -XX:+UseG1GC
+
+  # Bypass Forge's invalid-certificate check (older Forge versions)
+  -Dfml.ignoreInvalidMinecraftCertificates=true
+
+  # Disable aggressive OptiFine memory management
+  -Doptifine.DynamicResources=false
+  ```
+
+  <Warning>
+    Any argument beginning with `-Dorg.lwjgl.opengl.libname=` is **automatically stripped** (purged) from this field every time preferences are loaded. PojavLauncher manages the LWJGL native library path internally; overriding it will break rendering.
+  </Warning>
+
+  <Tip>
+    On devices with ≥ 4 GB RAM, combining `-Xms256m -XX:+UseG1GC -XX:MaxGCPauseMillis=100` often produces smoother frame pacing by reducing garbage-collection pause spikes.
+  </Tip>
+</ParamField>
+
+## Security
+
+<ParamField path="java_sandbox" type="boolean" default="true">
+  Enables a lightweight Java security manager that restricts what Minecraft mods can do at the OS level — for example, preventing them from spawning arbitrary subprocesses or accessing files outside the game directory.
+
+  <Warning>
+    Disabling the sandbox removes these restrictions. Only turn this off if a specific mod or modloader requires it and you trust the source of those mods completely.
+  </Warning>
+</ParamField>
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Multi-Runtime Manager" icon="java" href="/advanced/multi-runtime">
+    Step-by-step guide to installing, switching, and removing Java runtimes.
+  </Card>
+  <Card title="Experimental Settings" icon="flask" href="/configuration/experimental-settings">
+    Additional power-user options including download mirrors and manifest verification.
+  </Card>
+</CardGroup>

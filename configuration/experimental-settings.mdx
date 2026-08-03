@@ -1,0 +1,117 @@
+---
+title: "Experimental Settings in PojavLauncher for Android"
+sidebarTitle: "Experimental Settings"
+description: "Advanced options for developers and power users: shader dumping, CPU core affinity, Vulkan driver selection, download mirrors, and integrity verification."
+---
+
+The **Experimental** settings screen (and the related **Miscellaneous** settings) expose low-level knobs that are not needed for everyday play. They are intended for developers diagnosing rendering issues, power users squeezing extra performance out of specific hardware, and contributors testing changes to the launcher itself.
+
+<Warning>
+  These settings are intended for **developers and advanced users only**. Incorrect values can cause rendering artefacts, game crashes, failed downloads, or launcher instability. If you are unsure what an option does, leave it at its default value.
+</Warning>
+
+## Rendering Diagnostics
+
+<Accordion title="Dump Compiled Shaders">
+  <ParamField path="dump_shaders" type="boolean" default="false">
+    When enabled, the renderer writes compiled shader programs to disk as they are created during gameplay. Shader files are saved to the PojavLauncher data directory and can be inspected with GLSL/SPIR-V tools.
+
+    This is useful for:
+    - Diagnosing rendering corruption caused by driver-specific shader compilation bugs
+    - Capturing shaders to reproduce issues in a standalone test case
+    - Profiling shader compile times
+
+    <Note>
+      Shader dumping adds overhead to every draw call that compiles a new shader. Expect reduced frame rates and increased storage usage while this is active. Always disable it after you have collected the files you need.
+    </Note>
+  </ParamField>
+</Accordion>
+
+<Accordion title="Prefer System Vulkan Driver (Zink)">
+  <ParamField path="zinkPreferSystemDriver" type="boolean" default="false">
+    When using the `vulkan_zink` renderer, PojavLauncher normally ships its own Mesa Zink library. Enabling this option instructs the launcher to load the Vulkan driver already installed on the device (e.g. the vendor's Adreno or Mali driver) instead.
+
+    This option is only visible on devices that:
+    1. Pass Android's Vulkan support check, **and**
+    2. Are detected as running an Adreno GPU (via `GLInfoUtils.getGlInfo().isAdreno()`) with a Turnip driver available.
+
+    <Tip>
+      If you have a recent Qualcomm Snapdragon device with a community Turnip (open-source Adreno) driver installed, enabling this can yield higher Vulkan performance than the bundled Mesa driver.
+    </Tip>
+
+    <Warning>
+      Using an untested system driver may produce visual glitches, crashes, or driver-level errors. Revert to the default if you observe instability.
+    </Warning>
+  </ParamField>
+</Accordion>
+
+## Performance
+
+<Accordion title="Big Core Affinity">
+  <ParamField path="bigCoreAffinity" type="boolean" default="false">
+    Pins the Minecraft process to the high-performance ("big") CPU cores on devices with a heterogeneous core layout (e.g. ARM big.LITTLE or DynamIQ clusters). On a typical octa-core SoC this means restricting execution to the four fastest cores rather than letting the OS scheduler freely migrate threads to efficiency cores.
+
+    **When to enable:**
+    - You are on a device whose scheduler consistently migrates the game to small cores under moderate load
+    - You are benchmarking and want deterministic CPU performance
+    - You have confirmed via a profiler that core migration is causing frame-time spikes
+
+    <Warning>
+      Forcing big-core affinity prevents the OS from using efficiency cores for background work, which **significantly increases power consumption and heat output**. Battery life will be shorter and the device may throttle sooner on sustained sessions. Do not enable this unless you understand the thermal implications.
+    </Warning>
+  </ParamField>
+</Accordion>
+
+## Download & Verification
+
+<Accordion title="Download Source (Mirror)">
+  <ParamField path="downloadSource" type="string" default='"default"'>
+    Selects the mirror used when downloading Minecraft version manifests, game assets, and library JARs. The available mirror names and their endpoint URLs are defined in the launcher's `download_source_names` / `download_source_values` string arrays.
+
+    | Value | Description |
+    |---|---|
+    | `default` | Official Mojang / Microsoft CDN endpoints |
+    | Other values | Community or regional mirrors (availability may vary by build) |
+
+    Switch to an alternative mirror only if the default Mojang CDN is unreachable or consistently slow from your region.
+  </ParamField>
+</Accordion>
+
+<Accordion title="Verify Version Manifest">
+  <ParamField path="verifyManifest" type="boolean" default="true">
+    Controls whether the launcher validates the cryptographic signature on the Minecraft version manifest file before parsing it. When enabled, a tampered or corrupted manifest is rejected and the download is aborted.
+
+    <Warning>
+      Disabling manifest verification removes an important integrity check. Only turn this off if you are deliberately working with a custom or self-hosted version manifest for testing purposes.
+    </Warning>
+  </ParamField>
+</Accordion>
+
+<Accordion title="Verify Library Checksums">
+  <ParamField path="checkLibraries" type="boolean" default="true">
+    When enabled, the SHA-1 checksum of every downloaded library JAR is verified against the hash recorded in the version manifest. Files that fail verification are re-downloaded automatically.
+
+    Disabling this skips checksum verification and allows the launcher to use locally modified or partially downloaded library files without complaint. This can speed up repeated launches in a development environment where you are intentionally patching JARs, but it removes protection against silent corruption.
+
+    <Warning>
+      Running Minecraft with corrupted or tampered library files can cause unpredictable crashes and data loss. Leave this enabled for normal use.
+    </Warning>
+  </ParamField>
+</Accordion>
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Renderer Details" icon="gpu" href="/advanced/renderers">
+    Understand when and why to switch renderers, including Vulkan/Zink requirements.
+  </Card>
+  <Card title="Video Settings" icon="display" href="/configuration/video-settings">
+    Standard rendering options: resolution scale, VSync, and surface type.
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/advanced/troubleshooting">
+    Diagnose crashes and rendering issues, with guidance on using shader dumps.
+  </Card>
+  <Card title="Java Settings" icon="java" href="/configuration/java-settings">
+    JVM arguments, runtime management, RAM allocation, and the security sandbox.
+  </Card>
+</CardGroup>
